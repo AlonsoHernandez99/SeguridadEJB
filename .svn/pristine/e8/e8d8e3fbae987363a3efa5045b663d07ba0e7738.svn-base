@@ -1,0 +1,292 @@
+package com.seguridad.controlador;
+
+import com.seguridad.dao.SecMdsModulosSistemasDAO;
+import com.seguridad.dao.SecOpmOpcionesMenuDAO;
+import com.seguridad.dto.Rol;
+import com.seguridad.modelo.SecMdsModulosSistemas;
+import com.seguridad.modelo.SecOpmOpcionesMenu;
+import com.seguridad.modelo.SecOprOpcionesRoles;
+import com.seguridad.modelo.SecRolRoles;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.servicio.ModuloService;
+import com.seguridad.servicio.RolServicio;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import org.primefaces.model.TreeNode;
+
+@Named
+@ViewScoped
+public class OpcionesMenuControlador implements Serializable {
+
+    private SecOpmOpcionesMenu opcion;
+
+    private List<SecOpmOpcionesMenu> menus;
+
+    private SecSisSistemas sistema;
+
+    private SecMdsModulosSistemas modulo;
+    
+    private SecOprOpcionesRoles opcionRol;
+
+    private TreeNode root;
+
+    private SecRolRoles rol;
+
+    @EJB(beanName = "SecMdsModulosSistemasDAO")
+    private SecMdsModulosSistemasDAO mdsDAO;
+
+    @EJB(beanName = "SecOpmOpcionesMenuDAO")
+    private SecOpmOpcionesMenuDAO opmDAO;
+
+    @Inject
+    private ModuloService mdServ;
+
+    @Inject
+    private RolServicio rolServ;
+    
+
+    public OpcionesMenuControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        opcion = new SecOpmOpcionesMenu();
+        rol = new SecRolRoles();
+        opcion.setSecOpmOpcionesMenu(new SecOpmOpcionesMenu());
+        sistema = new SecSisSistemas();
+        modulo = new SecMdsModulosSistemas();
+        opcionRol = new SecOprOpcionesRoles();
+        listarOpciones();
+    }
+
+    public void addNewRol() {
+        FacesMessage msj;
+        try {
+            if(this.rolesWthoutOption().isEmpty())
+                this.rol = new SecRolRoles();
+            
+            opmDAO.save(new SecOprOpcionesRoles(opcion, rol));
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Acceso a Rol Concedido");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No Se pudo Dar Acceso al Rol", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No Se Pudo Dar Acceso al Rol");
+        }finally{
+             this.updateOpcion();
+        }
+       FacesContext.getCurrentInstance().addMessage(null, msj);
+    
+    }
+    
+    public void removeRolFromOption(){
+        FacesMessage msj;
+        try {
+            opmDAO.remove(opcionRol);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Acceso a Rol Removido");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No Se pudo Remover Acceso al Rol", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No Se Pudo Remover El Acceso al Rol");
+        }finally{
+             this.updateOpcion();
+        }
+       FacesContext.getCurrentInstance().addMessage(null, msj);
+    }
+    
+    public void updateOpcion(){
+        this.opcion = opmDAO.findById(opcion.getOpmId());
+    }
+
+    public List<SecMdsModulosSistemas> listarModulos() {
+        return mdsDAO.findAll();
+    }
+
+    public List<SecOpmOpcionesMenu> listarOpciones() {
+        return opmDAO.findOpcionesPadre(modulo.getMdsId());
+    }
+
+    public List<SecRolRoles> rolesWithoutRelationship() {
+        return rolServ.getRolesHasNotAccessOption(opcion.getOpmId());
+    }
+
+    public List<SecSisSistemas> listarSistemas() {
+        return mdServ.listarSistemas();
+    }
+
+    public List<SecMdsModulosSistemas> listarModulosBySistema() {
+        return mdServ.listarModulos(sistema.getSisId());
+    }
+
+    public List<Rol> listarRolesBySistema() {
+        List<Rol> listRoles = rolServ.findAll(sistema.getSisId());
+        return listRoles;
+    }
+
+    public List<SecRolRoles> rolesWthoutOption() {
+
+        List<SecRolRoles> roles = rolServ.findBySistema(sistema);
+        List<SecRolRoles> rolesToList = new ArrayList<SecRolRoles>();
+        List<SecRolRoles> rolesToView = new ArrayList<SecRolRoles>();
+        List<SecOprOpcionesRoles> rolesByOpcion = rolServ.findByOpcion(opcion.getOpmId());
+        for (SecRolRoles rol : roles) {
+
+            for (SecOprOpcionesRoles opc : rolesByOpcion) {
+                rolesToList.add(opc.getSecRolRoles());
+            }
+            if (!rolesToList.contains(rol)) {
+                rolesToView.add(rol);
+            }
+        }
+        return rolesToView;
+    }
+
+    public List<SecOpmOpcionesMenu> listarOpcionesPorModulo() {
+        return opmDAO.findByModulo(opcion.getSecMdsModulosSistemas().getMdsId(), opcion.getOpmId());
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            System.out.println("Viene al menu de guardar una nueva opcion");
+            if (opcion.getSecOpmOpcionesMenu().getOpmId() == null) {
+                opcion.setSecOpmOpcionesMenu(null);
+            }
+            opmDAO.save(opcion);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción almacenada.");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar la Opción.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarOpciones();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        SecOpmOpcionesMenu opmAux;
+        try {
+            /*if (opcion.getSecOpmOpcionesMenu().getOpmId() == 0) {
+                opcion.setSecOpmOpcionesMenu(null);
+            }*/
+            opmAux = opmDAO.findById(opcion.getOpmId());
+            opmAux.setOpmEtiqueta(opcion.getOpmEtiqueta());
+            opmAux.setOpmComando(opcion.getOpmComando());
+            opmAux.setOpmOrden(opcion.getOpmOrden());
+            opmAux.setOpmEstado(opcion.getOpmEstado());
+            opmAux.setSecMdsModulosSistemas(new SecMdsModulosSistemas(opcion.getSecMdsModulosSistemas().getMdsId()));
+            opmAux.setSecOpmOpcionesMenu(opcion.getSecOpmOpcionesMenu());
+
+            actualizarCascada(opmAux);
+
+            opmDAO.merge(opmAux);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción actualizada.");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar la Opción.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarOpciones();
+    }
+
+    public void actualizarCascada(SecOpmOpcionesMenu opm) {
+        if (!opm.getSecOpmOpcionesMenus().isEmpty()) {
+            for (SecOpmOpcionesMenu opc : (Set<SecOpmOpcionesMenu>) opm.getSecOpmOpcionesMenus()) {
+                opc.setOpmEstado(opm.getOpmEstado());
+                opc.setSecMdsModulosSistemas(opm.getSecMdsModulosSistemas());
+                actualizarCascada(opc);
+            }
+        }
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            opmDAO.remove(opcion);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción borrada.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar la Opción.");
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarOpciones();
+    }
+
+    public void reset() {
+        this.opcion = new SecOpmOpcionesMenu();
+        this.opcion.setSecOpmOpcionesMenu(new SecOpmOpcionesMenu());
+    }
+
+    public SecOpmOpcionesMenu getOpcion() {
+        return opcion;
+    }
+
+    public void setOpcion(SecOpmOpcionesMenu opcion) {
+        this.opcion = opcion;
+    }
+
+    public TreeNode getRoot() {
+        return root;
+    }
+
+    public void setRoot(TreeNode root) {
+        this.root = root;
+    }
+
+    public List<SecOpmOpcionesMenu> getMenus() {
+        return menus;
+    }
+
+    public void setMenus(List<SecOpmOpcionesMenu> menus) {
+        this.menus = menus;
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+
+    public SecMdsModulosSistemas getModulo() {
+        return modulo;
+    }
+
+    public void setModulo(SecMdsModulosSistemas modulo) {
+        this.modulo = modulo;
+    }
+    
+    public void setModuloSistema(){
+        System.out.println("MOD: " + this.opcion.getSecMdsModulosSistemas().getMdsId());
+       
+    }
+
+    public SecRolRoles getRol() {
+        return rol;
+    }
+
+    public void setRol(SecRolRoles rol) {
+        this.rol = rol;
+    }
+
+    public SecOprOpcionesRoles getOpcionRol() {
+        return opcionRol;
+    }
+
+    public void setOpcionRol(SecOprOpcionesRoles opcionRol) {
+        this.opcionRol = opcionRol;
+    }
+    
+}

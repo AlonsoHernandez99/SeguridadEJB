@@ -1,0 +1,108 @@
+package com.seguridad.controlador;
+
+import com.seguridad.modelo.SecMdsModulosSistemas;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.servicio.ModuloService;
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+@Named
+@ViewScoped
+public class ModuloControlador implements Serializable {
+
+    private SecMdsModulosSistemas modulo;
+
+    private SecSisSistemas sistema;
+
+    @Inject
+    private ModuloService mdServ;
+
+    public ModuloControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        modulo = new SecMdsModulosSistemas();
+        sistema = new SecSisSistemas();
+    }
+
+    public List<SecSisSistemas> listarSistemas() {
+        return mdServ.listarSistemas();
+    }
+
+    public List<SecMdsModulosSistemas> listarModulos() {
+        return mdServ.listarModulos(sistema.getSisId());
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            mdServ.guardar(modulo);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Modulo almacenado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar el modulo.");
+            Logger.getLogger(ModuloControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        modulo = new SecMdsModulosSistemas();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            mdServ.actualizar(modulo);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Modulo actualizado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el modulo.");
+            Logger.getLogger(ModuloControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        modulo = new SecMdsModulosSistemas();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            mdServ.borrar(modulo);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Modulo borrado.");
+        } catch (Exception hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el modulo.");
+            Logger.getLogger(ModuloControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        modulo = new SecMdsModulosSistemas();
+    }
+
+    public void reset() {
+        this.modulo = new SecMdsModulosSistemas();
+    }
+
+    public SecMdsModulosSistemas getModulo() {
+        return modulo;
+    }
+
+    public void setModulo(SecMdsModulosSistemas modulo) {
+        this.modulo = modulo;
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+    
+      public void setSistemaMod(int sistemaId) {
+        this.modulo.setSecSisSistemas(new SecSisSistemas(sistemaId));
+    }
+
+}

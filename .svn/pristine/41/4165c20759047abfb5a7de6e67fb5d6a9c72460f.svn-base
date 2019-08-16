@@ -1,0 +1,40 @@
+package com.seguridad.dao;
+
+import com.seguridad.modelo.SecRolRoles;
+import com.seguridad.modelo.SecSisSistemas;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.Query;
+
+@Stateless
+public class SecRolRolesDAO extends DAOBase {
+
+    public SecRolRolesDAO() {
+    }
+
+    public List<SecRolRoles> findAll() throws RuntimeException {
+
+        String queryString = "SELECT rol FROM SecRolRoles rol ORDER BY rol.secSisSistemas.sisNombre, rol.rolNombre ";
+        Query queryObject = getEntityManager().createQuery(queryString);
+        return queryObject.getResultList();
+
+    }
+
+    public List<SecRolRoles> findBySistema(SecSisSistemas sistema) throws RuntimeException {
+
+        String queryString = "SELECT rol FROM SecRolRoles as rol where rol.secSisSistemas.sisId = :sisId";
+        Query queryObject = getEntityManager().createQuery(queryString);
+        queryObject.setParameter("sisId", sistema.getSisId());
+        return queryObject.getResultList();
+
+    }
+
+    public SecRolRoles findById(Integer rolId) throws RuntimeException {
+
+        String queryString = "SELECT model FROM SecRolRoles model where model.rolId=:id";
+        Query queryObject = getEntityManager().createQuery(queryString);
+        queryObject.setParameter("id", rolId);
+        return (SecRolRoles) queryObject.getSingleResult();
+
+    }
+}

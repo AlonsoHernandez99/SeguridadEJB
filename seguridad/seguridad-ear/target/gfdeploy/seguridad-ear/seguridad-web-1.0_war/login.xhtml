@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8' ?> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:b="http://bootsfaces.net/ui"
+      xmlns:p="http://primefaces.org/ui">
+    <h:head>
+        <meta charset="UTF-8"/>
+        <title>:: Seguridad | Login ::</title>
+        <link rel="stylesheet" href="./resources/css/login.css"/>
+        <link rel="shortcut icon" type="image/png" href="./resources/images/icono.png"/>
+    </h:head>
+    <h:body>
+        <div class="wrapper fadeInDown">
+            <div id="formContent">
+                <!-- Tabs Titles -->
+                <h2 class="active">Iniciar Sesión</h2>
+
+                <!-- Icon -->
+                <div class="fadeIn first">
+                    <img src="./resources/icon/icon.svg" id="icon" alt="User Icon" />
+                </div>
+
+                <!-- Login Form -->
+                <b:form id="login-form" prependId="false">                                
+                    <p:inputText id="txtCodigo" 
+                                 value="#{loginControlador.usuario.usrCodigo}"
+                                 placeholder="Código"
+                                 required="true"
+                                 requiredMessage="El código de usuario es requerido"
+                                 styleClass="fadeIn second"/>                                            
+
+                    <p:password id="txtPsd"
+                                value="#{loginControlador.usuario.usrClave}"
+                                placeholder="Contraseña"
+                                styleClass="fadeIn third"
+                                required="true"
+                                requiredMessage="La contraseña es requerido"
+                                />                                            
+
+
+                    <b:commandButton id="cmdLogin"
+                                     value="Ingresar"
+                                     action="#{loginControlador.ingresar()}"
+                                     update="login-form:mensajes"
+                                     ajax="true"
+                                     class="fadeIn fourth">
+                    </b:commandButton>
+
+                    <b:messages class="font-weight-bold msj" id="mensajes"/>
+                </b:form>
+
+                <!-- Remind Passowrd -->
+                <div id="formFooter">
+                    <a class="underlineHover" href="http://www.dsdev.net" target="_blank"><img src="./resources/images/ds-black.png" height="30"/></a>
+                </div>
+            </div>
+        </div>
+    </h:body>
+</html>

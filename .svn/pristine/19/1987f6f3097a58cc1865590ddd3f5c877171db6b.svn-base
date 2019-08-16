@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Roles
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata> 
+
+        <b:modal title="Agregar Nuevo Rol" styleClass="formModal add"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="addForm" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText 
+                        id="rolNombre" 
+                        placeholder="Nombre del rol" 
+                        value="#{rolControlador.rol.rolNombre}"
+                        requiredMessage="Nombre es requerido" 
+                        required="true" colMd="12"  />
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu id="rolEstado" 
+                                     value="#{rolControlador.rol.rolEstado}"
+                                     requiredMessage="Estado es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemLabel="Activo" itemValue="ACT"/>
+                        <f:selectItem itemLabel="Inactivo" itemValue="INA"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Sistema:</label>
+                    <b:selectOneMenu id="sisId" 
+                                     value="#{rolControlador.rol.secSisSistemas.sisId}"
+                                     requiredMessage="Sistema es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Sistema" noSelectionOption="true"/>
+                        <f:selectItems 
+                            value="#{rolControlador.obtenerSistemas()}" 
+                            var="rol" 
+                            itemLabel="#{rol.sisNombre}" 
+                            itemValue="#{rol.sisId}"/>
+                    </b:selectOneMenu>
+                </div>
+                <b:messages></b:messages>
+                <b:fetchBeanInfos />
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.add').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{rolControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="addForm rolForm"
+                                      action="#{rolControlador.guardar()}"
+                                      value="Guardar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.add').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>                 
+
+        <h:form id="rolForm"
+                prependId="false"  
+                styleClass="form-horizontal">
+
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info error"/>
+
+            <!-- FILTRO DE DATOS -->
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Búsqueda de Rol por Sistema
+                </div>
+
+                <div class="panel-body">   
+
+                    <b:row>
+                        <b:column class="col-md-3">
+                            <h:outputText class="font-weight-bold" value="Seleccione un sistema de la lista: "/>
+                        </b:column>
+                        <b:column class="col-md-9">
+                            <b:selectOneMenu id="sltSistema" 
+                                             value="#{rolControlador.sistema.sisId}" 
+                                             required="false"
+                                             colMd="12">
+                                <f:selectItem itemValue="0" itemLabel="Seleccione Sistema"/>
+                                <f:selectItems value="#{rolControlador.listarSistemas()}" 
+                                               var="sistema" 
+                                               itemValue="#{sistema.sisId}" 
+                                               itemLabel="#{sistema.sisNombre}"/>
+                                <f:ajax render="rolForm" listener="#{rolControlador.listarRoles()}"/>
+                            </b:selectOneMenu>
+                        </b:column>
+                    </b:row>               
+                </div>
+            </div>
+            <!-- FIN DE FILTRADO DE DATOS -->
+
+
+            <div class="panel panel-dark">
+                <div class="panel panel-heading">
+                    Roles Registrados
+                </div>
+
+                <div class="panel panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Agregar"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm" action="#{rolControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+
+                            </b:form>     
+                        </div>
+                    </div>  
+                    <hr/>
+
+                    <b:dataTable  value="#{rolControlador.listarRoles()}"
+                                  var="col" styleClass="table" id="tablaRol"
+                                  page-length="10" widgetVar="P"
+                                  responsive="true"
+                                  style="width: 100%"
+                                  page-length-menu="10,20,50">
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{col.rolNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn width="15%" class="text-center">
+                            <f:facet name="header">
+                                <h:outputText value="Estado"/>
+                            </f:facet>
+                            <h:outputText value="#{col.rolEstado=='ACT'?'Activo':'Inactivo'}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn width="15%" class="text-center">
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+
+                            <b:commandButton oncomplete="$('.opc').modal();"  
+                                             process="@this"  
+                                             update=":frmAddOpc"
+                                             action="#{rolControlador.obtenerOpciones()}"
+                                             class="btn-sm"
+                                             iconAwesome="fa fa-list-ol" 
+                                             look="success" 
+                                             title="Asignar Opciones de menu"     
+                                             id="cmdAddOpc"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{rolControlador.rol}" />
+                            </b:commandButton>&nbsp; 
+
+                            <b:commandButton oncomplete="$('.edit').modal();"  
+                                             process="@this"  
+                                             update=":rolFormMod" 
+                                             class="btn-sm"
+                                             iconAwesome="fa fa-edit" 
+                                             look="primary" 
+                                             title="Editar"     
+                                             id="cmdMostrar"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{rolControlador.rol}" />
+                            </b:commandButton>&nbsp; 
+
+
+
+                            <p:commandButton id="cmdBorrar" 
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             styleClass="btn btn-danger btn-xs btn-del"
+                                             action="#{rolControlador.borrar()}" process="@this"
+                                             update="rolForm">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{rolControlador.rol}"/>
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este rol?" icon="ui-icon-alert" />
+
+                            </p:commandButton>
+                        </b:dataTableColumn>
+                    </b:dataTable>
+                </div>
+            </div>
+        </h:form>
+
+        <b:modal title="Editar Rol" styleClass="formModal edit"
+                 closable="false"
+                 closeOnEscape="true">
+            <b:form id="rolFormMod" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText 
+                        id="rolNombreUpd" 
+                        placeholder="Nombre del rol" 
+                        value="#{rolControlador.rol.rolNombre}"
+                        requiredMessage="Nombre es requerido" 
+                        required="true" colMd="12"  />
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu id="rolEstadoUpd" 
+                                     value="#{rolControlador.rol.rolEstado}"
+                                     requiredMessage="Estado es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemLabel="Activo" itemValue="ACT"/>
+                        <f:selectItem itemLabel="Inactivo" itemValue="INA"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Sistema:</label>
+                    <b:selectOneMenu id="sisIdUpd" 
+                                     value="#{rolControlador.rol.secSisSistemas.sisId}"
+                                     requiredMessage="Sistema es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Sistema" noSelectionOption="true"/>
+                        <f:selectItems 
+                            value="#{rolControlador.obtenerSistemas()}" 
+                            var="rol" 
+                            itemLabel="#{rol.sisNombre}" 
+                            itemValue="#{rol.sisId}"/>
+                    </b:selectOneMenu>
+                </div>
+                <b:messages></b:messages>
+                <b:fetchBeanInfos />
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.edit').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{rolControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="rolFormMod rolForm"
+                                      action="#{rolControlador.actualizar()}"
+                                      value="Actualizar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.edit').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>    
+
+        <b:modal title="Asignar Opciones de Menu" styleClass="formModal opc"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <h:form id="frmAddOpc"
+                    styleClass="form-horizontal">
+
+                <div class="form-group mx-3">
+                    <label class="col-form-label font-weight-bold">Sistema</label>
+                    <h:inputText id="txtSis" 
+                                 value="#{rolControlador.rol.secSisSistemas.sisNombre}" 
+                                 readonly="true"
+                                 styleClass="form-control"/>
+                </div>
+
+                <div class="form-group mx-3">
+                    <label class="col-form-label font-weight-bold">Modulo</label>
+                    <h:selectOneMenu
+                        id="sltMod"
+                        value="#{rolControlador.modulo.mdsId}"
+                        required="trye"
+                        requiredMessage="Modulo es requerido"
+                        styleClass="form-control">
+                        <f:selectItem itemValue="" itemLabel="Seleccione" noSelectionOption="true"/>
+                        <f:selectItems var="modu"
+                                       value="#{rolControlador.listarModulosPorSistemas()}"
+                                       itemValue="#{modu.mdsId}" itemLabel="#{modu.mdsNombre}"/>
+                        <f:ajax execute="@this" render="sltOpcs"/>
+                    </h:selectOneMenu>
+                </div>
+
+                <div class="form-group mx-3">
+                    <label class="col-form-label font-weight-bold">Opciones</label>
+                    <p:selectCheckboxMenu
+                        id="sltOpcs"
+                        disabled="#{rolControlador.modulo.mdsNombre.length()==0}"
+                        value="#{rolControlador.opciones}"
+                        converter="secOpcionesConvertidor"
+                        label="Seleccione las opciones con acceso"
+                        filter="false" 
+                        styleClass="form-control">
+                        <f:selectItems value="#{rolControlador.listarOpcionesPorModulo()}" 
+                                       var="opc" 
+                                       itemValue="#{opc}" itemLabel="#{opc.opmEtiqueta}"/>
+                    </p:selectCheckboxMenu>
+                </div>
+
+                <b:messages class="font-weight-bold"></b:messages>
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.opc').modal('hide')" 
+                                       update="rolForm frmAddOpc" 
+                                       action="#{rolControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="frmAddOpc rolForm"
+                                      process="frmAddOpc"
+                                      action="#{rolControlador.asignarOpciones()}"
+                                      value="Guardar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.opc').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+
+            </h:form>
+
+        </b:modal>
+
+
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="header">
+        Mantenimiento de Sistemas
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>             
+
+        <h:form id="sistemForm"
+                prependId="false"  
+                styleClass="form-horizontal">
+
+            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Nuevo Sistema
+                </div>
+
+                <div class="panel-body">
+                    <div class="form-group">
+                        <h:outputLabel  value="Código:" for="sisCodigo" styleClass="control-label col-lg-2"/>
+
+                        <div class="col-lg-3">
+                            <h:inputText id="sisCodigo" required="true" styleClass="form-control" value="#{sistemaControlador.sistema.sisCodigo}"/>
+                        </div>                           
+
+                        <p:outputLabel  value="Nombre:" for="sisNombre" styleClass="control-label col-lg-2"/>
+                        <div class="col-lg-3">
+                            <h:inputText id="sisNombre" required="true" styleClass="form-control" value="#{sistemaControlador.sistema.sisNombre}"/>
+                        </div>
+                    </div>                    
+                </div>
+
+                <div class="panel-footer">
+                    <div class="form-group">
+
+                        <div class="col-lg-2 col-lg-offset-2">
+                            <h:commandButton value="Limpiar" id="btnReset"
+                                             action="#{sistemaControlador.reset()}"
+                                             styleClass="btn btn-warning btn-block">
+                                <f:ajax execute="@this" render="sistemForm"/>
+                            </h:commandButton>
+                        </div>                          
+
+                        <div class="col-lg-2">
+                            <h:commandButton value="Guardar" id="btnGuardar"
+                                             action="#{sistemaControlador.guardar()}"
+                                             styleClass="btn btn-primary btn-block">
+                                <f:ajax execute="sistemForm" render="sistemForm"/>
+                            </h:commandButton>
+                        </div>    
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Sistemas Registrados
+                </div>
+
+                <div class="panel-body">
+                    <p:dataTable value="#{sistemaControlador.listarSistemas()}"
+                                 var="col" styleClass="table" id="tablaRol"
+                                 reflow="true"
+                                 resizableColumns="true"
+                                 draggableColumns="true">
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="id"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisId}"/>
+                        </p:column>
+
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Código"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisCodigo}"/>
+                        </p:column>                        
+
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisNombre}"/>
+                        </p:column>
+
+                        <p:column>
+
+                            <p:commandButton icon="fa fa-pencil"
+                                             title="Editar"
+                                             process="@this"
+                                             update=":sistemFormMod"
+                                             oncomplete="PF('dlg1').show();"
+                                             id="cmdMostrar">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{sistemaControlador.sistema}" />
+                            </p:commandButton>
+
+                            <p:commandButton id="cmdBorrar" 
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{sistemaControlador.borrar()}" process="@this"
+                                             update="sistemForm">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{sistemaControlador.sistema}"/>
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este sistema?" icon="ui-icon-alert" />
+
+                            </p:commandButton>
+
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog header="Modificar Sistema" widgetVar="dlg1" modal="true" width="901">
+            <h:form prependId="false" id="sistemFormMod" class="form-horizontal">
+
+                <div class="form-group">
+                    <h:outputLabel  value="Código:" for="sisCodigoMod" styleClass="control-label col-lg-2"/>
+
+                    <div class="col-lg-3">
+                        <h:inputText id="sisCodigoMod" required="true" styleClass="form-control" value="#{sistemaControlador.sistema.sisCodigo}"/>
+                    </div>                      
+
+                    <h:outputLabel  value="Nombre:" for="sisNombreMod" styleClass="control-label col-lg-2"/>
+
+                    <div class="col-lg-3">
+                        <h:inputText id="sisNombreMod" required="true" styleClass="form-control" value="#{sistemaControlador.sistema.sisNombre}"/>
+                    </div>                                      
+                </div>
+
+                <div class="form-group">
+                    <div class="col-lg-2 col-lg-offset-2">
+                        <p:commandButton id="cmdActualizar"
+                                         value="Actualizar"
+                                         action="#{sistemaControlador.actualizar()}"
+                                         process="sistemFormMod"
+                                         update="sistemFormMod :sistemForm"
+                                         oncomplete="PF('dlg1').hide();"
+                                         styleClass="btn btn-block">            
+                        </p:commandButton>
+                    </div>   
+                </div>                             
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

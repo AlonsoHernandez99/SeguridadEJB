@@ -1,0 +1,91 @@
+package com.seguridad.controlador;
+
+import com.seguridad.modelo.SecParParametros;
+import com.seguridad.servicio.ParameterService;
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+@Named
+@ViewScoped
+public class ParametroControlador implements Serializable {
+
+    private SecParParametros parametro;
+
+    @Inject
+    private ParameterService parServ;
+
+    @PostConstruct
+    public void init() {
+        parametro = new SecParParametros();
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            parServ.guardar(parametro);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Parámetro almacenado.");
+
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar el parámetro.");
+            Logger.getLogger(ParametroControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        parametro = new SecParParametros();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            parServ.actualizar(parametro);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Parámetro actualizado.");
+
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el parámetro.");
+            Logger.getLogger(ParametroControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar el parámetro", hexec);
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        parametro = new SecParParametros();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            parServ.borrar(parametro);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Parámetro borrado.");
+
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el parámetro.");
+            Logger.getLogger(ParametroControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar el parámetro", hexec);
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        parametro = new SecParParametros();
+    }
+
+    public List<SecParParametros> listarParametros() {
+        return parServ.listarParametros();
+    }
+
+    public void reset() {
+        this.parametro = new SecParParametros();
+    }
+
+    public SecParParametros getParametro() {
+        return parametro;
+    }
+
+    public void setParametro(SecParParametros parametro) {
+        this.parametro = parametro;
+    }
+
+}

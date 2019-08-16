@@ -1,0 +1,46 @@
+package com.seguridad.convertidor;
+
+import com.seguridad.dto.Rol;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.FacesConverter;
+import org.primefaces.component.picklist.PickList;
+import org.primefaces.model.DualListModel;
+
+@FacesConverter("rolConverter")
+public class SecPickListUsuarioConverter implements Converter {
+
+    @Override
+    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        Object ret = null;
+        if (component instanceof PickList) {
+            Object dualList = ((PickList) component).getValue();
+            DualListModel dl = (DualListModel) dualList;
+            for (Object o : dl.getSource()) {
+                String id = "" + ((Rol) o).getRolId();
+                if (value.equals(id)) {
+                    ret = o;
+                    break;
+                }
+            }
+            if (ret == null) {
+                for (Object o : dl.getTarget()) {
+                    String id = "" + ((Rol) o).getRolId();
+                    if (value.equals(id)) {
+                        ret = o;
+                        break;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    @Override
+    public String getAsString(FacesContext context, UIComponent component, Object value) {
+        Rol rol = (Rol) value;
+        return String.valueOf(rol.getRolId());
+    }
+
+}

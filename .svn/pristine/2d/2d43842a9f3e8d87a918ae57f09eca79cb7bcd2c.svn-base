@@ -1,0 +1,98 @@
+package com.seguridad.controlador;
+
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.servicio.UsuarioServicio;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Map;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.SessionScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+@Named
+@SessionScoped
+public class LoginControlador implements Serializable {
+
+    private SecUsrUsuarios usuario;
+    private java.lang.StringBuffer sb;
+    private boolean isLoggedIn;
+
+    @Inject
+    private UsuarioServicio userServ;
+
+    public LoginControlador() {
+
+    }
+
+    @PostConstruct
+    public void init() {
+        this.usuario = new SecUsrUsuarios();
+    }
+
+    public void ingresar() {
+        String url;
+
+        try {
+            usuario = userServ.findUser(usuario);
+            isLoggedIn = true;
+            url = sb != null ? sb.toString() : "./mantenimiento/bienvenida.xhtml";
+            doRedirect(url);
+        } catch (RuntimeException pexec) {
+            usuario = new SecUsrUsuarios();
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Credenciales invalidas", "Credenciales invalidas"));
+        }
+
+    }
+
+    public void verifyUseLogin() {
+        if (!isLoggedIn) {
+            doRedirect("../login.xhtml");
+            FacesContext context = FacesContext.getCurrentInstance();
+            HttpServletRequest origRequest = (HttpServletRequest) context.getExternalContext().getRequest();
+            this.sb = origRequest.getRequestURL();
+            String stringQuery = "";
+
+            Map<String, String[]> parametros = origRequest.getParameterMap();
+            if (!parametros.isEmpty()) {
+                stringQuery = "?";
+
+                for (String key : parametros.keySet()) {
+                    stringQuery = stringQuery + key + "=" + parametros.get(key)[0] + "&";
+                }
+
+                stringQuery = stringQuery.substring(0, stringQuery.length() - 1);
+            }
+            this.sb.append(stringQuery);
+        }
+    }
+
+    public void cerrarSesion() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        HttpSession httpSession = (HttpSession) context.getExternalContext().getSession(false);
+        httpSession.invalidate();
+        doRedirect("../login.xhtml");
+    }
+
+    private void doRedirect(String url) {
+        try {
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.getExternalContext().redirect(url);
+        } catch (IOException ioexec) {
+            System.err.println(ioexec);
+        }
+    }
+
+    public SecUsrUsuarios getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(SecUsrUsuarios usuario) {
+        this.usuario = usuario;
+    }
+
+}

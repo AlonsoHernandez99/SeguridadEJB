@@ -1,0 +1,77 @@
+package com.seguridad.convertidor;
+
+import com.seguridad.modelo.SecRolRoles;
+import java.util.ArrayList;
+import java.util.List;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UISelectItems;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.ConverterException;
+import javax.faces.convert.FacesConverter;
+import javax.faces.model.SelectItem;
+import org.primefaces.component.selectcheckboxmenu.SelectCheckboxMenu;
+
+@FacesConverter("secRolConvertidor")
+public class SecRolConvertidor implements Converter {
+
+    @Override
+    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        SecRolRoles rol = null;
+        
+        if (component instanceof SelectCheckboxMenu) {
+            rol = getObjectFromSelectCheckboxMenuComponent(component, value);
+        }
+        
+        return rol;
+    }
+
+    @Override
+    public String getAsString(FacesContext context, UIComponent component, Object value) {
+        SecRolRoles rol = (SecRolRoles) value;
+        return String.valueOf(rol.getRolId());
+    }
+    
+    private SecRolRoles getObjectFromSelectCheckboxMenuComponent(UIComponent component, String value) {
+
+        List<SelectItem> itemsList = null;
+        try {
+
+            for (UIComponent uic : ((SelectCheckboxMenu) component).getChildren()) {
+                if (uic instanceof UISelectItems) {
+                    itemsList = (ArrayList<SelectItem>) ((UISelectItems) uic).getValue();
+                }
+            }
+
+            return getObjectFromList(itemsList, Integer.valueOf(value));
+
+        } catch (ClassCastException | NumberFormatException cce) {
+            throw new ConverterException();
+        }
+    }
+
+    private SecRolRoles getObjectFromList(final List<?> list, final Integer identifier) {
+        for (final Object object : list) {
+            SecRolRoles rol;
+
+            if (object instanceof SelectItem) {
+                rol = (SecRolRoles) ((SelectItem) object).getValue();
+
+                if (rol.getRolId().equals(identifier)) {
+                    return rol;
+                }
+            }
+
+            if (object instanceof SecRolRoles) {
+                rol = (SecRolRoles) object;
+
+                if (rol.getRolId().equals(identifier)) {
+                    return rol;
+                }
+            }
+
+        }
+        return null;
+    }    
+
+}

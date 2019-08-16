@@ -1,0 +1,468 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"                
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Usuario
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>        
+
+        <!-- FORMULARIO MODAL PARA AGREGAR NUEVO USUARIO -->
+        <b:modal title="Agregar Nuevo Usuario" styleClass="formModal add"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="addForm" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+
+                    <b:inputText 
+                        id="txtNombre" 
+                        placeholder="Nombre de usuario" 
+                        value="#{usuarioControlador.usuario.usrNombre}" 
+                        requiredMessage="Nombre es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu id="rolEstado" 
+                                     value="#{usuarioControlador.usuario.usrEstado}" 
+                                     requiredMessage="Estado es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                        <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText 
+                        id="txtCodigo" 
+                        placeholder="Código de usuario" 
+                        value="#{usuarioControlador.usuario.usrCodigo}" 
+                        requiredMessage="Código es requerido" 
+                        required="true" colMd="12"/>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Correo:</label>
+                    <b:inputText 
+                        id="txtCorreo" 
+                        mask="email"
+                        placeholder="Correo de usuario" 
+                        value="#{usuarioControlador.usuario.usrCorreo}"  
+                        requiredMessage="Correo es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <b:messages></b:messages>
+
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.add').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{usuarioControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="addForm frmUser"
+                                      action="#{usuarioControlador.guardar()}"
+                                      value="Guardar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.add').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>          
+        <!-- FIN DE FORMULARIO MODAL PARA AGREGAR UN NUEVO USUARIO -->
+
+        <h:form id="frmUser"
+                prependId="false"
+                styleClass="form-horizontal">
+
+            <!--            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>-->
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info error warn"/>
+
+            <!-- FILTRO DE DATOS -->
+            <!--            <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                Búsqueda de Usuarios por Sistema
+                            </div>
+            
+                            <div class="panel-body">   
+            
+                                <b:row>
+                                    <b:column class="col-md-3">
+                                        <h:outputText class="font-weight-bold" value="Seleccione un sistema de la lista: "/>
+                                    </b:column>
+                                    <b:column class="col-md-9">
+                                        <b:selectOneMenu id="sltSistema" 
+                                                         value="#usuarioControlador.sistema.sisId}" 
+                                                         required="false"
+                                                         colMd="12">
+                                            <f:selectItem itemValue="0" itemLabel="Seleccione Sistema"/>
+                                            <f:selectItems value="#usuarioControlador.listarSistemas()}" 
+                                                           var="sistema" 
+                                                           itemValue="#sistema.sisId}" 
+                                                           itemLabel="#sistema.sisNombre}"/>
+                                            <f:ajax render="frmUser" listener="#usuarioControlador.listarUsuarios()}"/>
+                                        </b:selectOneMenu>
+                                    </b:column>
+                                </b:row>               
+                            </div>
+                        </div>-->
+            <!-- FIN DE FILTRADO DE DATOS -->
+
+
+
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Usuarios Registrados
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Nuevo usuario"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm" action="#{usuarioControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+
+                            </b:form>     
+                        </div>
+                    </div>   
+                    <hr/>
+
+                    <b:dataTable  value="#{usuarioControlador.listarUsuarios()}"
+                                  var="usuario" id="tblUsuarios"
+                                  page-length="10" widgetVar="P"
+                                  responsive="true"
+                                  style="width: 100%"
+                                  page-length-menu="10,20,50">
+
+                        <b:dataTableColumn width="25%">
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Código"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrCodigo}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Correo"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrCorreo}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Fecha de Creación"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrFechaIngreso}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Estado"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrEstado}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+                            <!-- <p:commandButton id="cmdMostrarRol"
+                                            icon="fa fa-users"
+                                            title="Asignar roles"
+                                            process="@this"
+                                            update=":frmAddRol"
+                                            oncomplete="PF('dlgAddRol').show();"
+                                            styleClass="">
+                               <f:setPropertyActionListener value="#usuario}" target="#usuarioControlador.usuario}"/>
+                           </p:commandButton>&nbsp; -->
+
+                            <b:commandButton oncomplete="$('.pass').modal();"  
+                                             process="@this"  
+                                             update=":frmPass" 
+                                             class="btn-sm"
+                                             iconAwesome="fas fa-key" 
+                                             look="secondary" 
+                                             title="Asignar Contraseña"     
+                                             id="btnPass"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>
+                            </b:commandButton>&nbsp;  
+
+                            <b:commandButton oncomplete="$('.edit').modal();"  
+                                             process="@this"  
+                                             update=":frmUserUpd" 
+                                             class="btn-sm"
+                                             iconAwesome="fa fa-edit" 
+                                             look="primary" 
+                                             title="Editar"     
+                                             id="btnEdit"
+                                             action="#{usuarioControlador.setUsuario(usuario)}" 
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>
+                            </b:commandButton>&nbsp;   
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{usuarioControlador.borrar()}"
+                                             process="@this"
+                                             styleClass="btn btn-danger btn-xs btn-del"
+                                             update="@form">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>      
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este usuario?" icon="ui-icon-alert" />
+                            </p:commandButton>&nbsp;
+                        </b:dataTableColumn>                           
+                    </b:dataTable>
+                </div>
+            </div>
+
+        </h:form>
+
+        <!-- FORMULARIO MODAL PARA EDITAR NUEVO USUARIO -->
+        <b:modal title="Editar Usuario" styleClass="formModal edit"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+
+            <b:form id="frmUserUpd" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText 
+                        id="txtCodigoUpd" 
+                        readonly="true"
+                        placeholder="Código de usuario" 
+                        value="#{usuarioControlador.usuario.usrCodigo}" 
+                        requiredMessage="Código es requerido" 
+                        required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText 
+                        id="txtNombreUpd" 
+                        placeholder="Nombre de usuario" 
+                        value="#{usuarioControlador.usuario.usrNombre}" 
+                        requiredMessage="Nombre es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu id="rolEstadoUpd" 
+                                     value="#{usuarioControlador.usuario.usrEstado}" 
+                                     requiredMessage="Estado es requerido" 
+                                     colMd="12" 
+                                     required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                        <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Correo:</label>
+                    <b:inputText 
+                        id="txtCorreoUpd" 
+                        mask="email"
+                        placeholder="Correo de usuario" 
+                        value="#{usuarioControlador.usuario.usrCorreo}"  
+                        requiredMessage="Correo es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <b:messages/>
+
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.edit').modal('hide')" 
+                                       update="frmUserUpd" 
+                                       action="#{usuarioControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="frmUserUpd frmUser"
+                                      action="#{usuarioControlador.actualizar()}"
+                                      value="Actualizar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.edit').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>          
+        <!-- FIN DE FORMULARIO MODAL PARA EDITAR UN NUEVO USUARIO -->
+
+        <!-- FORMULARIO MODAL PARA ASIGNAR LA CONTRASEÑA A UN USUARIO -->
+        <b:modal title="Asignar Contraseña a Usuario" styleClass="formModal pass"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="frmPass" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Contraseña:</label>
+                    <b:inputText 
+                        id="password" 
+                        placeholder="Contraseña es requerido" 
+                        value="#{usuarioControlador.clave}"
+                        requiredMessage="Código es requerido" 
+                        required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <b:message style="margin: 2.4pc 1pc -0pc !important;" for="password"/>
+                </div>
+
+                <h:panelGroup id="emailGrid">
+                    <div class="form-group">
+                        <h:outputText style="color: #666 !important;"  value="Correo:" rendered="#{usuarioControlador.sendEmail}" class="col-form-label font-weight-bold"/>
+                        <b:inputText 
+                            readonly="true" id="email"
+                            value="#{usuarioControlador.usuario.usrCorreo}"
+                            rendered="#{usuarioControlador.sendEmail}"
+                            colMd="12"/>
+                    </div>
+                </h:panelGroup>
+
+
+                <div class="form-group mb-1">
+                    <b:commandButton id="cmdGenerarClave"
+                                     value="Generar Clave"
+                                     iconAwesome="fas fa-random"
+                                     action="#{usuarioControlador.asignarClave()}"
+                                     colMd="4"
+                                     colLg="4"
+                                     styleClass="btn btn-success">
+                        <f:ajax render="password"/>
+                    </b:commandButton>
+                    <b:selectBooleanCheckbox value="#{usuarioControlador.sendEmail}" colMd="8" colLg="8" caption="Enviar Clave por Email">
+                        <f:ajax event="click" render="emailGrid"/>
+                    </b:selectBooleanCheckbox>
+                </div>
+
+                <b:fetchBeanInfos/>
+
+                <div class = "modal-footer">
+
+                    <b:commandButton  
+                        value="Cerrar"
+                        oncomplete="$('.pass').modal('hide')" 
+                        update="frmPass" 
+                        action="#{usuarioControlador.clearPass()}" 
+                        look="danger"
+                        iconAwesome="fas fa-sign-out-alt"
+                        />&nbsp;
+
+                    <b:commandButton  
+                        value="Guardar"
+                        oncomplete="if(!validationFailed) { $('.pass').modal('hide') } "
+                        update="frmPass frmUser:growl" 
+                        action="#{usuarioControlador.enviarContrasenaNueva()}" 
+                        look="primary"
+                        iconAwesome="far fa-save"
+                        />
+                </div>
+            </b:form>
+        </b:modal>          
+        <!-- FIN DE FORMULARIO MODAL PARA ASIGNAR LA CONTRASEÑA A UN USUARIO -->
+
+        <p:dialog id="dlgAddRol"
+                  widgetVar="dlgAddRol"
+                  resizable="false" 
+                  modal="true" 
+                  closeOnEscape="true"
+                  header="Roles de Usuario">
+
+            <p:ajax event="close" listener="#{usuarioControlador.reset()}" update="frmAddRol"/>
+
+            <h:form id="frmAddRol"
+                    prependId="false"
+                    styleClass="form-horizontal">
+
+                <p:messages id="messages" showDetail="true"  closable="true" severity="info error"/>
+
+                <div class="panel">
+                    <div class="panel-body">
+
+                        <div class="form-group">
+                            <h:outputLabel  value="Sistema:" for="sisId" styleClass="control-label col-lg-2"/>
+                            <div class="col-lg-6">
+                                <h:selectOneMenu id="sisId" styleClass="form-control" value="#{usuarioControlador.sistema.sisId}" >
+                                    <f:selectItem itemValue="-1" itemLabel="Seleccione"/>
+                                    <f:selectItems value="#{rolControlador.obtenerSistemas()}" var="rol" itemLabel="#{rol.sisNombre}" itemValue="#{rol.sisId}"/>
+                                    <f:ajax execute="@this" render="menu" listener="#{usuarioControlador.obtenerRolesUsuario()}"/>
+                                </h:selectOneMenu>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h:outputLabel for="menu" value="Roles:" styleClass="control-label col-lg-2"/>
+                            <div class="col-lg-6">
+                                <p:selectCheckboxMenu id="menu" value="#{usuarioControlador.rolesUsuario}" label="Roles"
+                                                      filter="true" filterMatchMode="contains"
+
+                                                      styleClass="form-control">
+                                    <f:selectItems value="#{usuarioControlador.listarRolesPorSistema()}" var="rol" itemLabel="#{rol.rolNombre}" itemValue="#{rol}" />
+                                </p:selectCheckboxMenu>                            
+                            </div>                            
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-lg-6 col-lg-offset-2">
+                                <p:commandButton id="cmdAddRol"
+                                                 value="Actualizar"
+                                                 action="#{usuarioControlador.agregarRolUsuario()}"
+                                                 process="frmAddRol"
+                                                 update="frmAddRol"
+                                                 styleClass="btn btn-block">            
+                                </p:commandButton>
+                            </div>
+                        </div>
+                    </div>                    
+                </div>                
+
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

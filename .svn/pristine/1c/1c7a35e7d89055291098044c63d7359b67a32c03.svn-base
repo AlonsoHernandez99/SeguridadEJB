@@ -1,0 +1,168 @@
+package com.seguridad.controlador;
+
+import com.seguridad.modelo.SecRolRoles;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.servicio.UsuarioServicio;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.mail.MessagingException;
+
+@Named
+@ViewScoped
+public class UsuarioControlador implements Serializable {
+
+    private SecUsrUsuarios usuario;
+    private SecSisSistemas sistema;
+    private List<String> listaRolesUsuario;
+    private Set<SecRolRoles> rolesUsuario = new HashSet(0);
+    
+    @Inject
+    UsuarioServicio userServ;
+
+    public UsuarioControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        usuario = new SecUsrUsuarios();
+        sistema = new SecSisSistemas();
+        listaRolesUsuario = new ArrayList<>();
+    }
+
+    public List<SecUsrUsuarios> listarUsuarios() {
+        List<SecUsrUsuarios> usrList = userServ.listarUsuarios();
+        return usrList;
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            userServ.guardar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario almacenado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+        } catch (MessagingException ex) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_WARN, "", "El usuario se almaceno pero no se le envió el correo con sus datos de usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            userServ.actualizar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario actualizado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            userServ.borrar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario borrado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar", hexec);
+
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public List<SecRolRoles> listarRolesPorSistema() {
+        return userServ.listarRolesPorSistema(sistema);
+    }
+
+    public void obtenerRolesUsuario() {
+        rolesUsuario = userServ.obtenerRolesUsuario(usuario);
+    }
+
+    public void agregarRolUsuario() {
+        try {
+            userServ.agregarRolUsuario(usuario, sistema, rolesUsuario);
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Se guardaron los roles para este usuario."));
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo realizar la accion."));
+        }
+
+        sistema = new SecSisSistemas();
+    }
+    
+    public void enviarContrasenaNueva() {
+        FacesMessage msj;
+        
+        try {            
+            userServ.enviarContrasenaNueva(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "", "Contraseña generada y enviada con éxito al usuario");
+        } catch (RuntimeException ex) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", "No se pudo generar la contraseña nueva del usuario");
+        } catch (MessagingException ex) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+            msj = new FacesMessage(FacesMessage.SEVERITY_WARN, "", "La contraseña nueva para el usuario " + usuario.getUsrCodigo() + " fue generada pero no se le pudo enviar por correo, por favor revise los parámetros de configuración para enviar correos.");
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+    }    
+
+    public void reset() {
+        this.usuario = new SecUsrUsuarios();
+        this.sistema = new SecSisSistemas();
+        this.rolesUsuario = new HashSet<>();
+    }
+
+    public SecUsrUsuarios getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(SecUsrUsuarios usuario) {
+        this.usuario = usuario;
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+
+    public List<String> getListaRolesUsuario() {
+        return listaRolesUsuario;
+    }
+
+    public void setListaRolesUsuario(List<String> listaRolesUsuario) {
+        this.listaRolesUsuario = listaRolesUsuario;
+    }
+
+    public Set getRolesUsuario() {
+        return rolesUsuario;
+    }
+
+    public void setRolesUsuario(Set rolesUsuario) {
+        this.rolesUsuario = rolesUsuario;
+    }
+
+}

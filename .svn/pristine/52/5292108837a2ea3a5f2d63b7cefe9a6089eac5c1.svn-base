@@ -1,0 +1,85 @@
+package com.seguridad.convertidor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+//import javax.ejb.EJB;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UISelectItems;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.ConverterException;
+import javax.faces.convert.FacesConverter;
+
+
+
+
+import com.seguridad.dto.OpcionMenu;
+import javax.faces.model.SelectItem;
+import org.primefaces.component.selectcheckboxmenu.SelectCheckboxMenu;
+
+
+@FacesConverter("secOpcionesConvertidor")
+public class SecOpcionesConvertidor implements Converter {
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+
+		OpcionMenu opm = null;
+
+		if (component instanceof SelectCheckboxMenu) {
+			opm = getObjectFromSelectCheckboxMenuComponent(component, value);
+		}
+
+		return opm;
+	}
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		OpcionMenu opc = (OpcionMenu) value;
+		return opc != null ? String.valueOf(opc.getOpmId()) : "";
+	}
+
+	private OpcionMenu getObjectFromSelectCheckboxMenuComponent(UIComponent component, String value) {
+
+		List<SelectItem> itemsList = null;
+		try {
+
+			for (UIComponent uic : ((SelectCheckboxMenu) component).getChildren()) {
+				if (uic instanceof UISelectItems) {
+					itemsList = (ArrayList<SelectItem>) ((UISelectItems) uic).getValue();
+				}
+			}
+
+			return getObjectFromList(itemsList, Integer.valueOf(value));
+
+		} catch (ClassCastException | NumberFormatException cce) {
+			throw new ConverterException();
+		}
+	}
+
+	private OpcionMenu getObjectFromList(final List<?> list, final Integer identifier) {
+		for (final Object object : list) {
+			OpcionMenu opm;
+
+			if (object instanceof SelectItem) {
+				opm = (OpcionMenu) ((SelectItem) object).getValue();
+
+				if (opm.getOpmId().equals(identifier)) {
+					return opm;
+				}
+			}
+
+			if (object instanceof OpcionMenu) {
+				opm = (OpcionMenu) object;
+
+				if (opm.getOpmId().equals(identifier)) {
+					return opm;
+				}
+			}
+
+		}
+		return null;
+	}
+
+}

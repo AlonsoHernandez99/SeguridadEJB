@@ -1,0 +1,28 @@
+package com.seguridad.webservice;
+
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.servicio.UsuarioServicio;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.inject.Inject;
+import javax.jws.WebService;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.mail.MessagingException;
+
+@WebService(serviceName = "UsuarioSOAP")
+public class UsuarioSOAP {
+    SecUsrUsuarios usr;
+    
+    @Inject
+    UsuarioServicio usrServ;
+    
+    @WebMethod(operationName = "guardar")
+    public void guardar(@WebParam(name = "usr") SecUsrUsuarios usr){
+        try {
+            usrServ.guardar(usr);
+        } catch (RuntimeException | MessagingException ex) {
+            Logger.getLogger(UsuarioSOAP.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+}

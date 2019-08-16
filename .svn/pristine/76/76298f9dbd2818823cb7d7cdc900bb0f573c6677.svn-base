@@ -1,0 +1,175 @@
+package com.seguridad.webservice;
+
+import com.google.gson.Gson;
+import com.seguridad.dao.SecMdsModulosSistemasDAO;
+import com.seguridad.dao.SecOpmOpcionesMenuDAO;
+import com.seguridad.dao.SecUsrUsuariosDAO;
+import com.seguridad.modelo.SecMdsModulosSistemas;
+import com.seguridad.modelo.SecOpmOpcionesMenu;
+import com.seguridad.modelo.SecRouRolesUsuarios;
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.utilidad.OpcionMenu;
+import com.seguridad.utilidad.Rol;
+import com.seguridad.utilidad.Usuario;
+import java.util.ArrayList;
+import java.util.List;
+import javax.ejb.EJB;
+import javax.ws.rs.Produces;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import org.apache.commons.codec.digest.DigestUtils;
+
+/**
+ * REST Web Service
+ *
+ * @author user
+ */
+@Path("accounts")
+public class AccountsService {
+    @EJB(beanName = "SecUsrUsuariosDAO")
+    private SecUsrUsuariosDAO usrDAO;
+    @EJB(beanName = "SecMdsModulosSistemasDAO")
+    private SecMdsModulosSistemasDAO mdsDAO;
+    @EJB(beanName = "SecOpmOpcionesMenuDAO")
+    private SecOpmOpcionesMenuDAO opmDAO ;    
+
+    public AccountsService() {
+    }
+
+    @GET
+    @Path("autenticate")
+    @Produces("application/json")
+    public String autenticar(@QueryParam("id") String usrId, @QueryParam("pass") String pass,
+            @QueryParam("idSis") String sistema) {
+
+        SecUsrUsuarios usr = usrDAO.findUser(usrId, pass);
+        Usuario usrJson = null;
+
+        Gson gson = new Gson();
+
+        if (usr != null) {
+            usrJson = new Usuario();
+            usrJson.setUsrCodigo(usr.getUsrCodigo());
+            usrJson.setUsrClave(usr.getUsrClave());
+            usrJson.setUsrEstado(usr.getUsrEstado());
+            usrJson.setUsrNombre(usr.getUsrNombre());
+
+            OpcionMenu modulo;
+            OpcionMenu opHijo;
+            
+            List<SecMdsModulosSistemas> modulosUsr;
+            List<SecOpmOpcionesMenu> opmsUsr;            
+            
+            modulosUsr = mdsDAO.finbByUserAndSystem(usrId, sistema);
+
+            for (SecMdsModulosSistemas mds : modulosUsr) {
+                modulo = new OpcionMenu();
+                modulo.setId(mds.getMdsId());
+                modulo.setEtiqueta(mds.getMdsNombre());
+                modulo.setComando("");
+                modulo.setModulo(true);
+
+                opmsUsr = opmDAO.finbByUserAndModule(usrId, mds.getMdsId());
+
+                for (SecOpmOpcionesMenu opm : opmsUsr) {
+                    opHijo = new OpcionMenu();
+                    opHijo.setId(opm.getOpmId());
+                    opHijo.setEtiqueta(opm.getOpmEtiqueta());
+                    opHijo.setComando(opm.getOpmComando());
+
+                    beta(opHijo, modulo, opm.getSecOpmOpcionesMenu());
+                }
+                
+                usrJson.getMenu().add(modulo);
+            }
+            
+            // Cargamos los roles al usuario
+            for (SecRouRolesUsuarios rou : usr.getSecRouRolesUsuarioses()) {
+                Rol rol = new Rol();
+                rol.setId(rou.getSecRolRoles().getRolId());
+                rol.setNombre(rou.getSecRolRoles().getRolNombre());
+                usrJson.getRoles().add(rol);
+            }
+        }
+
+        return gson.toJson(usrJson);
+    }
+    
+    @GET
+    @Path("changePass")
+    @Produces("application/json")
+    public String cambiarContrasena(@QueryParam("id") String usrId, @QueryParam("pass") String pass,
+            @QueryParam("newPass") String newPass) {
+        
+        SecUsrUsuarios usr = usrDAO.findUser(usrId, pass);
+        Usuario usrJson = null;
+
+        Gson gson = new Gson();
+
+        if (usr != null) {
+            usrJson = new Usuario();
+            usrJson.setUsrCodigo(usr.getUsrCodigo());
+            usrJson.setUsrClave(usr.getUsrClave());
+            usrJson.setUsrEstado(usr.getUsrEstado());
+            usrJson.setUsrNombre(usr.getUsrNombre());
+         
+            usr.setUsrClave(DigestUtils.sha512Hex(newPass));
+
+            usrJson.setUsrClave(usr.getUsrClave());
+            
+        }
+
+        return gson.toJson(usrJson);
+    }    
+    
+    @GET
+    @Path("listUsers")
+    @Produces("application/json")
+    public String listarUsuariosPorSistema(@QueryParam("idSis") String sistema){
+
+        Usuario usuarioJson;
+        List<Usuario> usuariosJson = new ArrayList<>();
+        List<SecUsrUsuarios> usuarios = usrDAO.findBySystem(sistema);
+        
+        for(SecUsrUsuarios usr : usuarios){
+            usuarioJson = new Usuario();
+            usuarioJson.setUsrCodigo(usr.getUsrCodigo());
+            usuarioJson.setUsrNombre(usr.getUsrNombre());
+            usuariosJson.add(usuarioJson);
+        }
+        
+        Gson gson = new Gson();
+        
+        return gson.toJson(usuariosJson);
+    }
+        
+    private void beta(OpcionMenu nodoHijo, OpcionMenu arbol, SecOpmOpcionesMenu opmPapa) {
+
+        OpcionMenu opPapa;
+        OpcionMenu aux;
+
+        if (arbol.search(nodoHijo) == null) {
+            if (opmPapa != null) {
+                opmPapa = opmDAO.findById(opmPapa.getOpmId());
+
+                opPapa = new OpcionMenu();
+                opPapa.setId(opmPapa.getOpmId());
+                opPapa.setEtiqueta(opmPapa.getOpmEtiqueta());
+                opPapa.setComando(opmPapa.getOpmComando());
+
+                aux = arbol.search(opPapa);
+                if (aux != null) {
+                    aux.addChild(nodoHijo);
+                } else {
+                    opPapa.addChild(nodoHijo);
+                    beta(opPapa, arbol, opmPapa.getSecOpmOpcionesMenu());
+                }
+
+            } else {
+                arbol.addChild(nodoHijo);
+            }
+        }
+    }
+
+}

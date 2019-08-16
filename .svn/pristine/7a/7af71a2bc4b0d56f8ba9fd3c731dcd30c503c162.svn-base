@@ -1,0 +1,371 @@
+package com.seguridad.controlador;
+
+import com.seguridad.dto.Rol;
+import com.seguridad.modelo.SecOprOpcionesRoles;
+import com.seguridad.modelo.SecRolRoles;
+import com.seguridad.modelo.SecRouRolesUsuarios;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.modelo.SecUsuariosSistema;
+import com.seguridad.servicio.DozerMapper;
+import com.seguridad.servicio.ModuloService;
+import com.seguridad.servicio.RolServicio;
+import com.seguridad.servicio.SistemaServicio;
+import com.seguridad.servicio.UsuarioServicio;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.TransferEvent;
+import org.primefaces.model.DualListModel;
+
+@Named
+@ViewScoped
+public class UsuariosSistemaControlador implements Serializable {
+
+    private SecUsrUsuarios usuario;
+    private SecSisSistemas sistema;
+    private List<String> listaRolesUsuario;
+    private Set<SecRolRoles> rolesUsuario = new HashSet(0);
+    private List<SecUsrUsuarios> usuariosSinRoles;
+    private List<String> opciones;
+    private SecUsrUsuarios usuarioToSelect;
+    private List<Rol> rolesNoAsignados;
+    private List<Rol> rolesAsignados;
+    private boolean disableBtn;
+    private String urlIframe;
+
+    private DualListModel<Rol> roles;
+
+    @Inject
+    UsuarioServicio userServ;
+
+    @Inject
+    private ModuloService mdServ;
+
+    @Inject
+    private RolServicio rolServicio;
+
+    @Inject
+    private SistemaServicio sistemaServicio;
+
+    @Inject
+    private DozerMapper dozMap;
+
+    public UsuariosSistemaControlador() {
+
+    }
+
+    @PostConstruct
+    public void init() {
+        usuario = new SecUsrUsuarios();
+        sistema = new SecSisSistemas();
+        usuarioToSelect = new SecUsrUsuarios();
+        listaRolesUsuario = new ArrayList<>();
+        usuariosSinRoles = new ArrayList<SecUsrUsuarios>();
+        opciones = new ArrayList<String>();
+        roles = null;
+        disableBtn = true;
+        urlIframe = "";
+        listarSistemas();
+
+    }
+
+    public void valoresToPickList() {
+        this.rolesNoAsignados = rolServicio.getRolesWithoutAccess(sistema.getSisId(), usuarioToSelect.getUsrCodigo());
+        this.rolesAsignados = rolServicio.getRolesWithAccess(sistema.getSisId(), usuarioToSelect.getUsrCodigo());
+
+        roles = new DualListModel<Rol>(this.rolesNoAsignados, this.rolesAsignados);
+        this.getOpcionesByRoles();
+
+        this.urlIframe = "http://localhost:8080/EmpleosAdmin-VP/administracion/permisos-service.xhtml?usuario_id=" + usuarioToSelect.getUsrCodigo();
+        System.out.println("URL: " + urlIframe);
+    }
+
+    public void checkDisableBtn() {
+        if (this.roles.getTarget().size() == 0) {
+            this.disableBtn = true;
+        } else {
+            this.disableBtn = false;
+        }
+    }
+
+    public void validateEmptyRoles() {
+
+        if (this.roles.getTarget().size() == 0) {
+            System.out.println("Retorna FALSE");
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Debe Seleccionar Almenos un Rol para el Usuario"));
+
+        } else {
+            PrimeFaces current = PrimeFaces.current();
+            current.executeScript("$('.edit').modal('hide')");
+            this.reset();
+        }
+    }
+
+    public void saveData() {
+
+        List<Rol> selected = this.roles.getTarget();
+
+        List<SecRouRolesUsuarios> rolesUsuario = rolServicio.getRolesAccessOfUser(sistema.getSisId(), usuarioToSelect.getUsrCodigo());
+
+        List<SecRouRolesUsuarios> rolesToSave = new ArrayList<SecRouRolesUsuarios>();
+
+        if (rolesUsuario.size() == 0) {
+            userServ.addSistemaToUser(new SecUsuariosSistema(usuarioToSelect, sistema, "ACT"));
+            for (Rol rol : selected) {
+                rolesToSave.add(new SecRouRolesUsuarios(dozMap.map(rol, SecRolRoles.class), usuarioToSelect));
+            }
+        } else {
+            for (SecRouRolesUsuarios ru : rolesUsuario) {
+                for (Rol rol : selected) {
+
+                    SecRouRolesUsuarios rolUsuario = new SecRouRolesUsuarios(dozMap.map(rol, SecRolRoles.class), usuarioToSelect);
+
+                    if (rolUsuario.getSecRolRoles().getRolId() != ru.getSecRolRoles().getRolId()
+                            && rolUsuario.getSecUsrUsuarios().getUsrCodigo() != ru.getSecUsrUsuarios().getUsrCodigo()) {
+                        rolesToSave.add(rolUsuario);
+                    }
+                }
+
+            }
+        }
+
+        rolServicio.saveAllRolesUser(rolesToSave);
+        this.reset();
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Se guardaron los roles para este usuario con éxito."));
+
+    }
+
+    public void onTransfer(TransferEvent event) {
+
+        if (event.isAdd()) {
+            for (Object obj : event.getItems()) {
+                Rol rol = (Rol) obj;
+                rolServicio.saveOneRolesUser(new SecRouRolesUsuarios(dozMap.map(rol, SecRolRoles.class), usuarioToSelect));
+            }
+        }
+
+        if (event.isRemove()) {
+            for (Object obj : event.getItems()) {
+                Rol rol = (Rol) obj;
+                rolServicio.deleteRolUsuario(rolServicio.validateRolUsuario(rol.getRolId(), usuarioToSelect.getUsrCodigo()));
+
+            }
+        }
+    }
+
+    public void getOpcionesByRoles() {
+
+        for (SecRolRoles rol : rolServicio.getAllRolesOfSistema(sistema.getSisId())) {
+            for (SecOprOpcionesRoles opcRol : rol.getSecOprOpcionesRoleses()) {
+
+                if (!opciones.contains(opcRol.getSecOpmOpcionesMenu().getOpmEtiqueta())) {
+                    opciones.add(opcRol.getSecOpmOpcionesMenu().getOpmEtiqueta());
+                }
+            }
+        }
+    }
+
+    public void borrar() {
+        userServ.removeUsuarioFromSistema(userServ.getSistemaOfUser(usuarioToSelect.getUsrCodigo(), sistema.getSisId()), sistema);
+        this.reset();
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Usuario removido de sistema con éxito."));
+    }
+
+    public String getEstadoOfUsuarioSistema(SecUsrUsuarios usuario) {
+        return userServ.getEstadoSistemaOfUser(usuario.getUsrCodigo(), sistema.getSisId());
+    }
+
+    public void cambiarEstadoUsuario(String estado) {
+        SecUsuariosSistema usis = userServ.getSistemaOfUser(usuarioToSelect.getUsrCodigo(), sistema.getSisId());
+        usis.setEstado(estado);
+        userServ.actualizarUsis(usis);
+        this.reset();
+        if (estado.equals("ACT")) {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Usuario Activado del sistema con éxito."));
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Usuario Desactivado del sistema con éxito."));
+        }
+    }
+
+    public void obtenerUsuariosSinRolEnSistema() {
+        usuariosSinRoles = userServ.getUsuariosWhereNoHasRole(sistema.getSisId());
+    }
+
+    public List<SecUsrUsuarios> listarUsuarios() {
+
+        List<SecUsrUsuarios> usrList = userServ.findUsuariosBySistema(sistema.getSisId());
+        return usrList;
+    }
+
+    public List<SecSisSistemas> listarSistemas() {
+
+        return mdServ.listarSistemas();
+    }
+
+    public void findRol() {
+        //this.reset();
+        setSistema(sistemaServicio.findById(sistema.getSisId()));
+    }
+
+    public void clearPass() {
+        this.usuario = new SecUsrUsuarios();
+    }
+
+    public List<SecRolRoles> listarRolesPorSistema() {
+        return userServ.listarRolesPorSistema(sistema);
+    }
+
+    public void obtenerRolesUsuario() {
+        rolesUsuario = userServ.obtenerRolesUsuario(usuario);
+    }
+
+    public void reset() {
+        this.usuarioToSelect = new SecUsrUsuarios();
+        this.roles = new DualListModel<Rol>();
+    }
+
+    public SecUsrUsuarios getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(SecUsrUsuarios usuario) {
+        this.usuario = usuario;
+    }
+
+    public List<Rol> getRolesNoAsignados() {
+        return rolesNoAsignados;
+    }
+
+    public void setRolesNoAsignados(List<Rol> rolesNoAsignados) {
+        this.rolesNoAsignados = rolesNoAsignados;
+    }
+
+    public List<Rol> getRolesAsignados() {
+        return rolesAsignados;
+    }
+
+    public void setRolesAsignados(List<Rol> rolesAsignados) {
+        this.rolesAsignados = rolesAsignados;
+    }
+
+    public DualListModel<Rol> getRoles() {
+        if (this.roles == null) {
+            this.roles = new DualListModel<>();
+        }
+        return roles;
+    }
+
+    public void setRoles(DualListModel<Rol> roles) {
+        this.roles = roles;
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+
+    public RolServicio getRolServicio() {
+        return rolServicio;
+    }
+
+    public void setRolServicio(RolServicio rolServicio) {
+        this.rolServicio = rolServicio;
+    }
+
+    public List<String> getListaRolesUsuario() {
+        return listaRolesUsuario;
+    }
+
+    public void setListaRolesUsuario(List<String> listaRolesUsuario) {
+        this.listaRolesUsuario = listaRolesUsuario;
+    }
+
+    public Set<SecRolRoles> getRolesUsuario() {
+        return rolesUsuario;
+    }
+
+    public void setRolesUsuario(Set<SecRolRoles> rolesUsuario) {
+        this.rolesUsuario = rolesUsuario;
+    }
+
+    public UsuarioServicio getUserServ() {
+        return userServ;
+    }
+
+    public void setUserServ(UsuarioServicio userServ) {
+        this.userServ = userServ;
+    }
+
+    public ModuloService getMdServ() {
+        return mdServ;
+    }
+
+    public void setMdServ(ModuloService mdServ) {
+        this.mdServ = mdServ;
+    }
+
+    public SistemaServicio getSistemaServicio() {
+        return sistemaServicio;
+    }
+
+    public void setSistemaServicio(SistemaServicio sistemaServicio) {
+        this.sistemaServicio = sistemaServicio;
+    }
+
+    public List<SecUsrUsuarios> getUsuariosSinRoles() {
+        return usuariosSinRoles;
+    }
+
+    public void setUsuariosSinRoles(List<SecUsrUsuarios> usuariosSinRoles) {
+        this.usuariosSinRoles = usuariosSinRoles;
+    }
+
+    public SecUsrUsuarios getUsuarioToSelect() {
+        return usuarioToSelect;
+    }
+
+    public void setUsuarioToSelect(SecUsrUsuarios usuarioToSelect) {
+        this.usuarioToSelect = usuarioToSelect;
+        this.valoresToPickList();
+    }
+
+    public boolean isDisableBtn() {
+        return disableBtn;
+    }
+
+    public void setDisableBtn(boolean disableBtn) {
+        this.disableBtn = disableBtn;
+    }
+
+    public List<String> getOpciones() {
+        return opciones;
+    }
+
+    public void setOpciones(List<String> opciones) {
+        this.opciones = opciones;
+    }
+
+    public String getUrlIframe() {
+        return urlIframe;
+    }
+
+    public void setUrlIframe(String urlIframe) {
+        this.urlIframe = urlIframe;
+    }
+
+}

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+    <persistence-unit name="JpaMappingPU" transaction-type="JTA">
+        <!--
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>     
+
+        <provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+        -->
+    
+        <!--
+        <non-jta-data-source>jdbc/seguridad</non-jta-data-source>
+        -->
+        <jta-data-source>jdbc/seguridad</jta-data-source>
+        <shared-cache-mode>NONE</shared-cache-mode>
+        
+        <!--
+        <class>com.seguridad.modelo.SecMdsModulosSistemas</class>
+        <class>com.seguridad.modelo.SecOpmOpcionesMenu</class>
+        <class>com.seguridad.modelo.SecOprOpcionesRoles</class>
+        <class>com.seguridad.modelo.SecRolRoles</class>
+        <class>com.seguridad.modelo.SecRouRolesUsuarios</class>
+        <class>com.seguridad.modelo.SecSisSistemas</class>
+        <class>com.seguridad.modelo.SecUsrUsuarios</class>
+        <class>com.seguridad.modelo.SecParParametros</class>        
+        <exclude-unlisted-classes/>
+        -->
+        
+        <!--
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>       
+        -->
+        <properties>            
+            <!--
+            <property name="javax.persistence.jdbc.driver" value="oracle.jdbc.driver.OracleDriver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@192.168.0.10:1521:DSDESA"/>
+            <property name="javax.persistence.jdbc.user" value="strseg"/>
+            <property name="javax.persistence.jdbc.password" value="strseg"/>                      
+            -->
+            
+            
+            <property name = "hibernate.show_sql" value = "true" />   
+            <property name="eclipselink.logging.level" value="FINE"/>
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+            <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=INFO, Tool=INFO, SQL=TRACE"/>                   
+            
+            
+            <!-- 
+            <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+            -->
+        </properties>
+    </persistence-unit>
+</persistence>

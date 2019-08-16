@@ -1,0 +1,246 @@
+package com.seguridad.controlador;
+
+import com.seguridad.modelo.SecRolRoles;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.modelo.SecUsrUsuarios;
+import com.seguridad.servicio.ModuloService;
+import com.seguridad.servicio.UsuarioServicio;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.mail.MessagingException;
+
+@Named
+@ViewScoped
+public class UsuarioControlador implements Serializable {
+
+    private SecUsrUsuarios usuario;
+    private SecSisSistemas sistema;
+    private List<String> listaRolesUsuario;
+    private Set<SecRolRoles> rolesUsuario = new HashSet(0);
+    private String clave;
+    private String enviarCorreoClave;
+    private String method;
+    private boolean sendEmail;
+
+    @Inject
+    UsuarioServicio userServ;
+
+    @Inject
+    private ModuloService mdServ;
+
+    public UsuarioControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        usuario = new SecUsrUsuarios();
+        sistema = new SecSisSistemas();
+        listaRolesUsuario = new ArrayList<>();
+        sendEmail = false;
+        listarUsuarios();
+    }
+
+    public List<SecUsrUsuarios> listarUsuarios() {
+        return userServ.listarUsuarios();
+    }
+
+    public List<SecSisSistemas> listarSistemas() {
+        return mdServ.listarSistemas();
+    }
+
+    public void clearPass() {
+        this.clave = "";
+        this.usuario = new SecUsrUsuarios();
+        this.sendEmail = false;
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            userServ.guardar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario almacenado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+        } catch (MessagingException ex) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_WARN, "", "El usuario se almaceno pero no se le envió el correo con sus datos de usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            userServ.actualizar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario actualizado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            userServ.borrar(usuario);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario borrado.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el usuario.");
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar", hexec);
+
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        usuario = new SecUsrUsuarios();
+    }
+
+    public List<SecRolRoles> listarRolesPorSistema() {
+        return userServ.listarRolesPorSistema(sistema);
+    }
+
+    public void obtenerRolesUsuario() {
+        rolesUsuario = userServ.obtenerRolesUsuario(usuario);
+    }
+    
+
+    public void agregarRolUsuario() {
+        try {
+            userServ.agregarRolUsuario(usuario, sistema, rolesUsuario);
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Exito", "Se guardaron los roles para este usuario."));
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo realizar la accion."));
+        }
+
+        sistema = new SecSisSistemas();
+    }
+
+    public void enviarContrasenaNueva() {
+        FacesMessage msj;
+
+        try {
+            usuario.setUsrClave(clave);
+            if (!this.sendEmail) {
+                userServ.enviarContrasenaNueva(usuario,true);
+                msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "", "Contraseña de Usuario Actualizada Correctamente");
+            } else {
+                userServ.enviarContrasenaNueva(usuario,false);
+                msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "", "Contraseña Actualizada y Enviada con éxito al usuario");
+            }
+            this.clearPass();
+        } catch (RuntimeException ex) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "", "No se pudo generar la contraseña nueva del usuario");
+        } catch (MessagingException ex) {
+            Logger.getLogger(UsuarioControlador.class.getName()).log(Level.SEVERE, null, ex);
+            msj = new FacesMessage(FacesMessage.SEVERITY_WARN, "", "La contraseña nueva para el usuario " + usuario.getUsrCodigo() + " fue generada pero no se le pudo enviar por correo, por favor revise los parámetros de configuración para enviar correos.");
+        }
+
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+    }
+
+    private String generarContrasena(int longitud) {
+        String cadenaAleatoria = "";
+        long milis = new java.util.GregorianCalendar().getTimeInMillis();
+        Random r = new Random(milis);
+        int i = 0;
+        while (i < longitud) {
+            char c = (char) r.nextInt(255);
+            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')) {
+                cadenaAleatoria += c;
+                i++;
+            }
+        }
+        return cadenaAleatoria;
+    }
+
+    public void reset() {
+        this.usuario = new SecUsrUsuarios();
+        this.rolesUsuario = new HashSet<>();
+    }
+
+    public SecUsrUsuarios getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(SecUsrUsuarios usuario) {
+        this.usuario = usuario;
+    }
+
+    public void asignarClave() {
+        clave = generarContrasena(10);
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+
+    public List<String> getListaRolesUsuario() {
+        return listaRolesUsuario;
+    }
+
+    public void setListaRolesUsuario(List<String> listaRolesUsuario) {
+        this.listaRolesUsuario = listaRolesUsuario;
+    }
+
+    public Set getRolesUsuario() {
+        return rolesUsuario;
+    }
+
+    public void setRolesUsuario(Set rolesUsuario) {
+        this.rolesUsuario = rolesUsuario;
+    }
+
+    public String getClave() {
+        return clave;
+    }
+
+    public void setClave(String clave) {
+        this.clave = clave;
+    }
+
+    public String getEnviarCorreoClave() {
+        return enviarCorreoClave;
+    }
+
+    public void setEnviarCorreoClave(String enviarCorreoClave) {
+        this.enviarCorreoClave = enviarCorreoClave;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    public boolean isSendEmail() {
+        return sendEmail;
+    }
+
+    public void setSendEmail(boolean sendEmail) {
+        this.sendEmail = sendEmail;
+    }
+
+}

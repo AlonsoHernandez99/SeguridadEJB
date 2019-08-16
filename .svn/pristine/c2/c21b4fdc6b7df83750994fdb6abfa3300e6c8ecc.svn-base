@@ -1,0 +1,54 @@
+package com.seguridad.dao;
+
+import java.util.List;
+
+import javax.ejb.Stateless;
+import javax.persistence.Query;
+
+import org.apache.commons.codec.digest.DigestUtils;
+
+import com.seguridad.modelo.SecUsrUsuarios;
+
+@Stateless
+public class SecUsrUsuariosDAO extends DAOBase {
+
+	public SecUsrUsuariosDAO() {
+	}
+
+	public SecUsrUsuarios findUser(String usrId, String usrClave) throws RuntimeException {
+
+		String queryString = "SELECT model FROM SecUsrUsuarios model where model.usrCodigo=:id AND model.usrClave = :clave AND model.usrEstado = 'ACT'";
+		Query queryObject = getEntityManager().createQuery(queryString);
+		queryObject.setParameter("id", usrId);
+		queryObject.setParameter("clave", DigestUtils.sha512Hex(usrClave));
+		//queryObject.setParameter("clave", usrClave);
+
+		return (SecUsrUsuarios) queryObject.getSingleResult();
+	}
+
+	public SecUsrUsuarios findById(String usrId) throws RuntimeException {
+		String queryString = "SELECT model FROM SecUsrUsuarios model where model.usrCodigo=:id";
+		Query queryObject = getEntityManager().createQuery(queryString);
+		queryObject.setParameter("id", usrId);
+		return (SecUsrUsuarios) queryObject.getSingleResult();
+	}
+
+	public List<SecUsrUsuarios> findAll() throws RuntimeException {
+		String queryString = "SELECT usr FROM SecUsrUsuarios usr ORDER BY usr.usrNombre";
+		Query queryObject;
+		queryObject = getEntityManager().createQuery(queryString);
+		return queryObject.getResultList();
+	}
+
+	public List<SecUsrUsuarios> findBySystem(String sistema) throws RuntimeException {
+		String queryString = ""
+				+ "SELECT DISTINCT rou.secUsrUsuarios "
+				+ "FROM SecRouRolesUsuarios rou "
+				+ "WHERE rou.secRolRoles.secSisSistemas.sisCodigo = :sis";
+		Query queryObject;
+		queryObject = getEntityManager().createQuery(queryString);
+		queryObject.setParameter("sis", sistema);
+		return queryObject.getResultList();
+	}
+
+}

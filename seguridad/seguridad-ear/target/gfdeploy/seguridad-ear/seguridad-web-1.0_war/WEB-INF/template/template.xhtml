@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="no-js" lang="es"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"  
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:b="http://bootsfaces.net/ui">
+    <h:head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+        <title>:: Seguridad ::</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link rel="shortcut icon" type="image/png" href="../resources/images/icono.png"/>
+        <link rel="stylesheet" href="../resources/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="../resources/css/fontawesome.min.css"/>
+        <link rel="stylesheet" href="../resources/css/themify-icons.css"/>
+        <link rel="stylesheet" href="../resources/css/metisMenu.css"/>
+        <link rel="stylesheet" href="../resources/css/owl.carousel.min.css"/>
+        <link rel="stylesheet" href="../resources/css/slicknav.min.css"/>
+        <!-- others css -->
+        <link rel="stylesheet" href="../resources/css/typography.css"/>
+        <link rel="stylesheet" href="../resources/css/default-css.css"/>
+        <link rel="stylesheet" href="../resources/css/styles.css"/>
+        <link rel="stylesheet" href="../resources/css/responsive.css"/>
+
+        <h:outputScript library="primefaces" name="jquery/jquery.js" target="head" />
+        <h:outputScript library="primefaces" name="jquery/jquery-plugins.js" target="head" />
+    </h:head>
+
+    <h:body>
+
+        <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException" 
+                                onexception="window.location = '../sesionTerminada.xhtml';"/>                
+
+        <p:ajaxStatus onstart="$('#spinner').removeClass('d-none');" onsuccess="$('#spinner').addClass('d-none');" />
+
+        <p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false" responsive="true">
+            <p:graphicImage library="images" name="squares.gif" />
+        </p:dialog>           
+
+        <h:form>
+            <p:confirmDialog global="true" closeOnEscape="true">
+                <b:commandButton   value="No"
+                                   type="button"
+                                   styleClass="ui-confirmdialog-no btn btn-danger"
+                                   style="padding: 1px 11px;"
+                                   iconAwesome="fas fa-times"
+                                   />
+
+                <b:commandButton   value="Sí"
+                                   type="button"
+                                   styleClass="ui-confirmdialog-yes btn btn-primary"
+                                   style="padding: 1px 11px;"
+                                   iconAwesome="fas fa-check"
+                                   /> 
+            </p:confirmDialog>
+        </h:form>
+
+        <div class="row d-none" id="spinner">
+            <div class="col-md-12 loading text-center"></div>
+        </div>
+
+
+        <div id="preloader">
+            <div class="loader"></div>
+        </div>
+        <div class="page-container">
+            <div class="sidebar-menu">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <a href="../mantenimiento/bienvenida.xhtml"><img src="../resources/images/ds-white.png" class="img-fluid" alt="logo"></img></a>
+                    </div>
+                </div>
+                <div class="main-menu">
+                    <div class="menu-inner">
+                        <nav >
+                            <ul class="metismenu" id="barra">
+                                <li><a href="../mantenimiento/bienvenida.xhtml"><i class="fas fa-home"></i> <span>Home</span></a></li>
+                                <li ><a href="../mantenimiento/sistema.xhtml"><i class="fa fa-desktop fa-fw"></i><span>Sistemas</span></a></li>
+                                <li ><a href="../mantenimiento/modulo.xhtml"><i class="fa fa-cubes fa-fw"></i> <span>Módulos</span></a></li>
+                                <li ><a href="../mantenimiento/opcion.xhtml"><i class="fa fa-bars fa-fw"></i> <span>Opciones de Menu</span></a></li>
+                                <li ><a href="../mantenimiento/roles.xhtml"><i class="fa fa-users fa-fw"></i> <span>Roles</span></a></li>
+                                <li ><a href="../mantenimiento/usuario.xhtml"><i class="fa fa-male fa-fw"></i> <span>Usuarios</span></a></li>
+                                <li ><a href="../mantenimiento/asignacionroles.xhtml"><i class="fas fa-user-shield"></i><span>Asignación de Roles</span></a></li>
+                                <li ><a href="../mantenimiento/parametro.xhtml"><i class="fa fa-cogs fa-fw"></i> <span>Párametros</span></a></li>
+                            </ul>
+                            <!-- Divider -->
+                            <hr/>
+                            <div class="row text-center">
+                                <div class="col-md-12">
+                                    <button class="btn btn-rounded btn-dark mb-3 nav-btn " style="margin-left: 1.6pc !important;" type="button" ><i class="fas fa-chevron-left"></i></button>
+                                </div>
+                            </div>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+
+                <div class="header-area">
+                    <div class="row align-items-center">
+
+                        <div class="col-md-3 col-sm-3 clearfix">
+                            <div class="nav-btn pull-left">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-9 col-sm-9 d-flex justify-content-end" >
+                            <ul class="notification-area" id="user">
+                                <li id="full-view"><i class="fas fa-expand"></i></li>
+                                <li id="full-view-exit"><i class="fas fa-search-minus"></i></li>
+                                <li>     
+                                    <div class="dropdown col-lg-12 col-md-12 col-sm-12">
+                                        <h5 class="dropdown-toggle text-dark" aria-expanded="false"  data-toggle="dropdown"><i class="fas fa-user mx-1"></i>#{loginControlador.usuario.usrNombre}</h5>
+                                        <div class="dropdown-menu d-flex justify-content-center" aria-labelledby="dropdownMenuButton">
+                                            <h:form>
+                                                <h:commandLink class="dropdown-item" action="#{loginControlador.cerrarSesion()}">
+                                                    <i class="fas fa-sign-out-alt"></i> Salir
+                                                </h:commandLink>
+                                            </h:form>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="main-content-inner">
+                    <div class="row">
+                        <div class="col-lg-12 mt-5">
+                            <div class="card card-md" style="min-height: 200px;">
+                                <div class="card-body">
+                                    <h1 class="my-4">
+                                        <ui:insert  name="header">Tittle</ui:insert>
+                                    </h1><br/>
+                                    <ui:insert name="content">Content</ui:insert>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+
+                <!-- modernizr css -->
+                <script src="../resources/js/vendor/modernizr-2.8.3.min.js"></script>
+                <!-- offset area end -->
+                <!-- jquery latest version -->
+
+                <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+                <script type="text/javascript" src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+
+
+                <!-- bootstrap 4 js --> 
+                <script src="../resources/js/popper.min.js"></script>
+                <script src="../resources/js/bootstrap.min.js"></script>
+                <script src="../resources/js/owl.carousel.min.js"></script>
+                <script src="../resources/js/metisMenu.min.js"></script>
+                <script src="../resources/js/jquery.slimscroll.min.js"></script>
+                <script src="../resources/js/jquery.slicknav.min.js"></script>
+
+                <!-- others plugins -->
+                <script src="../resources/js/plugins.js"></script>
+                <script src="../resources/js/scripts.js"></script>
+
+
+                <div class="footer-area">
+                    <p id="footer"></p>
+                </div>
+
+            </footer>
+
+            <script>
+                $(function () {
+                    $("#footer").append("© Datasoft Development " + new Date().getFullYear());
+
+                    //Agregando la clase active en cada pagina
+                    var pageUrl = window.location.href.substr(window.location.href.lastIndexOf("/") + 1);
+                    $('#barra a[href="' + "../mantenimiento/" + pageUrl + '"]').parent('li').addClass('active');
+
+                    $(window).on('resize', function () {
+                        var win = $(this);
+                        if (win.width() > 600) {
+                            $("#user").css('margin-top', '0');
+                        } else {
+                            $("#user").css('margin-top', ' -1.9pc');
+                        }
+                    });
+
+                    if ($(window).width() > 600) {
+                        $("#user").css('margin-top', '0');
+                    } else {
+                        $("#user").css('margin-top', ' -1.9pc');
+                    }
+
+                });
+            </script>
+
+        </div>
+
+
+
+
+    </h:body>
+
+</html>

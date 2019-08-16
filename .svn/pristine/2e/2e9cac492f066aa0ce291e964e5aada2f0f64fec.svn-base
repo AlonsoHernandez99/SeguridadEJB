@@ -1,0 +1,297 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"                
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Usuario
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>        
+
+        <h:form id="frmUser"
+                prependId="false"
+                styleClass="form-horizontal">
+
+            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Nuevo Usuario
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="form-group">
+                        <p:outputLabel id="lblNombre" for="txtNombre" value="Nombre" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:inputText id="txtNombre" 
+                                         value="#{usuarioControlador.usuario.usrNombre}" 
+                                         required="true"
+                                         styleClass="form-control"/>
+                        </div>
+
+                        <p:outputLabel id="lblEstado" for="txtEstado" value="Estado" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:selectOneMenu id="txtEstado" 
+                                             value="#{usuarioControlador.usuario.usrEstado}" 
+                                             required="true"
+                                             styleClass="form-control">
+                                <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                                <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                            </h:selectOneMenu>
+                        </div>   
+                    </div>                       
+
+                    <div class="form-group">
+                        <p:outputLabel id="lblCodigo" for="txtCodigo" value="Código" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:inputText id="txtCodigo" 
+                                         value="#{usuarioControlador.usuario.usrCodigo}" 
+                                         required="true"
+                                         styleClass="form-control"/>
+                        </div>
+
+                        <p:outputLabel id="lblPass" for="txtCorreo" value="Correo" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:inputText id="txtCorreo" 
+                                         value="#{usuarioControlador.usuario.usrCorreo}" 
+                                         required="true"
+                                         styleClass="form-control"/>
+                        </div>                        
+                    </div>
+
+                </div>
+
+                <div class="panel-footer">
+                    <div class="form-group ">
+                        <div class="col-lg-2  col-lg-offset-2">
+                            <h:commandButton id="cmdReset"
+                                             value="Limpiar"
+                                             action="#{usuarioControlador.reset()}"
+                                             styleClass="btn btn-warning btn-block">
+                                <f:ajax execute="@this" render="frmUser"/>                
+                            </h:commandButton>
+                        </div>                          
+                        <div class="col-lg-2">
+                            <h:commandButton id="cmdGuardar"
+                                             value="Guardar"
+                                             action="#{usuarioControlador.guardar()}"
+                                             styleClass="btn btn-primary btn-block">
+                                <f:ajax execute="frmUser" render="frmUser"/>                
+                            </h:commandButton>
+                        </div>                      
+                    </div>                    
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Usuarios Registrados
+                </div>
+
+                <div class="panel-body">
+                    <p:dataTable id="tblUsuarios"
+                                 value="#{usuarioControlador.listarUsuarios()}"
+                                 var="usuario"
+                                 styleClass="table"
+                                 reflow="true"
+                                 resizableColumns="true"
+                                 draggableColumns="true">
+
+                        <p:column headerText="Nombre">
+                            <h:outputText value="#{usuario.usrNombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Código">
+                            <h:outputText value="#{usuario.usrCodigo}"/>
+                        </p:column>
+
+                        <p:column headerText="Correo">
+                            <h:outputText value="#{usuario.usrCorreo}"/>
+                        </p:column>
+
+                        <p:column headerText="Fecha de Creación">
+                            <h:outputText value="#{usuario.usrFechaIngreso}"/>
+                        </p:column>                        
+
+                        <p:column headerText="Estado">
+                            <h:outputText value="#{usuario.usrEstado}"/>
+                        </p:column>    
+
+                        <p:column headerText="">
+
+                            <p:commandButton id="cmdMostrarRol"
+                                             icon="fa fa-users"
+                                             title="Asignar roles"
+                                             process="@this"
+                                             update=":frmAddRol"
+                                             oncomplete="PF('dlgAddRol').show();"
+                                             styleClass="">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>
+                            </p:commandButton>                            
+
+                            <p:commandButton id="cmdMostrar"
+                                             icon="fa fa-pencil"
+                                             title="Editar"
+                                             process="@this"
+                                             update=":frmUserUpd"
+                                             oncomplete="PF('dlgUserUpd').show();">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>
+                            </p:commandButton>
+
+                            <p:commandButton id="cmdNvaPass"
+                                             icon="fa fa-key"
+                                             title="Generar contraseña nueva"
+                                             process="@this"
+                                             action="#{usuarioControlador.enviarContrasenaNueva()}">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>
+                            </p:commandButton>                            
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             process="@this"
+                                             update="@form"
+                                             action="#{usuarioControlador.borrar()}">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuarioControlador.usuario}"/>        
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este usuario?" icon="ui-icon-alert" />
+                            </p:commandButton>
+                        </p:column>                              
+                    </p:dataTable>
+                </div>
+            </div>
+
+        </h:form>
+
+        <p:dialog id="dlgUserUpd"
+                  widgetVar="dlgUserUpd"
+                  resizable="false" 
+                  modal="true" 
+                  closeOnEscape="true"
+                  header="Actualizar Usuario">
+            <h:form id="frmUserUpd"
+                    prependId="false"
+                    styleClass="form-horizontal">
+                <div class="form-group">
+                    <h:outputLabel id="lblNombreUpd" for="txtNombreUpd" value="Nombre" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:inputText id="txtNombreUpd" 
+                                     value="#{usuarioControlador.usuario.usrNombre}" 
+                                     required="true"
+                                     styleClass="form-control"/>
+                    </div>
+
+                    <h:outputLabel id="lblEstadoUpd" for="txtEstadoUpd" value="Estado" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:selectOneMenu id="txtEstadoUpd" 
+                                         value="#{usuarioControlador.usuario.usrEstado}" 
+                                         required="true"
+                                         styleClass="form-control">
+                            <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                            <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                        </h:selectOneMenu>
+                    </div>   
+                </div>                       
+
+                <div class="form-group">
+                    <h:outputLabel id="lblCodigoUpd" for="txtCodigoUpd" value="Código" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:inputText id="txtCodigoUpd" 
+                                     value="#{usuarioControlador.usuario.usrCodigo}" 
+                                     required="true"
+                                     styleClass="form-control"/>
+                    </div>
+
+                    <h:outputLabel id="lblCorreoUpd" for="txtCorreoUpd" value="Correo" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:inputText id="txtCorreoUpd" 
+                                     value="#{usuarioControlador.usuario.usrCorreo}" 
+                                     required="true"
+                                     styleClass="form-control"/>
+                    </div>                        
+                </div>
+
+                <div class="form-group">
+                    <div class="col-lg-3 col-lg-offset-2">
+                        <p:commandButton id="cmdActualizar"
+                                         value="Actualizar"
+                                         action="#{usuarioControlador.actualizar()}"
+                                         process="frmUserUpd"
+                                         update="frmUserUpd :frmUser"
+                                         oncomplete="PF('dlgUserUpd').hide();"
+                                         styleClass="btn btn-block">            
+                        </p:commandButton>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgAddRol"
+                  widgetVar="dlgAddRol"
+                  resizable="false" 
+                  modal="true" 
+                  closeOnEscape="true"
+                  header="Roles de Usuario">
+
+            <p:ajax event="close" listener="#{usuarioControlador.reset()}" update="frmAddRol"/>
+
+            <h:form id="frmAddRol"
+                    prependId="false"
+                    styleClass="form-horizontal">
+
+                <p:messages id="messages" showDetail="true" autoUpdate="true" closable="true" severity="info error"/>
+
+                <div class="panel">
+                    <div class="panel-body">
+
+                        <div class="form-group">
+                            <h:outputLabel  value="Sistema:" for="sisId" styleClass="control-label col-lg-2"/>
+                            <div class="col-lg-6">
+                                <h:selectOneMenu id="sisId" styleClass="form-control" value="#{usuarioControlador.sistema.sisId}" >
+                                    <f:selectItem itemValue="-1" itemLabel="Seleccione"/>
+                                    <f:selectItems value="#{rolControlador.obtenerSistemas()}" var="rol" itemLabel="#{rol.sisNombre}" itemValue="#{rol.sisId}"/>
+                                    <f:ajax execute="@this" render="menu" listener="#{usuarioControlador.obtenerRolesUsuario()}"/>
+                                </h:selectOneMenu>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <h:outputLabel for="menu" value="Roles:" styleClass="control-label col-lg-2"/>
+                            <div class="col-lg-6">
+                                <p:selectCheckboxMenu id="menu" value="#{usuarioControlador.rolesUsuario}" label="Roles"
+                                                      filter="true" filterMatchMode="contains"
+                                                      converter="secRolConvertidor"
+                                                      styleClass="form-control">
+                                    <f:selectItems value="#{usuarioControlador.listarRolesPorSistema()}" var="rol" itemLabel="#{rol.rolNombre}" itemValue="#{rol}" />
+                                </p:selectCheckboxMenu>                            
+                            </div>                            
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-lg-6 col-lg-offset-2">
+                                <p:commandButton id="cmdAddRol"
+                                                 value="Actualizar"
+                                                 action="#{usuarioControlador.agregarRolUsuario()}"
+                                                 process="frmAddRol"
+                                                 update="frmAddRol"
+                                                 styleClass="btn btn-block">            
+                                </p:commandButton>
+                            </div>
+                        </div>
+                    </div>                    
+                </div>                
+
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

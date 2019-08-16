@@ -1,0 +1,294 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Modulos
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata> 
+
+
+        <b:modal title="Agregar Módulo" styleClass="formModal add"
+                 closable="false"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="addForm">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText id="moduloName" 
+                                 placeholder="Nombre del modulo" 
+                                 value="#{moduloControlador.modulo.mdsNombre}"  
+                                 requiredMessage="Nombre de módulo requerido" 
+                                 required="true" 
+                                 colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Orden:</label>
+                    <b:inputText id="moduloOrden" 
+                                 placeholder="Orden del modulo" 
+                                 value="#{moduloControlador.modulo.mdsOrden}"   
+                                 mask="numeric"
+                                 class="text-left"
+                                 requiredMessage="Orden de módulo requerido"
+                                 required="true" 
+                                 colMd="12"/>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Sistema:</label>
+                    <b:selectOneMenu 
+                        id="sltSistema" 
+                        value="#{moduloControlador.modulo.secSisSistemas.sisId}" 
+                        requiredMessage="Sistema es requerido" 
+                        colMd="12" 
+                        required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione" noSelectionOption="true"/>
+                        <f:selectItems value="#{moduloControlador.listarSistemas()}" 
+                                       var="sistema" 
+                                       itemValue="#{sistema.sisId}" 
+                                       itemLabel="#{sistema.sisNombre}"/>
+                    </b:selectOneMenu>
+                </div>
+
+                <b:messages class="font-weight-bold" ></b:messages>
+
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.add').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{moduloControlador.reset()}"
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="addForm frm"
+                                     action="#{moduloControlador.guardar()}"
+                                     value="Guardar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('.add').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+
+
+
+        <h:form id="frm"
+                prependId="false"
+                styleClass="form-horizontal">
+
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info"/>
+
+            <!-- FILTRO DE DATOS -->
+            <div class="panel panel-dark">
+                <div class="panel-heading font-weight-bold">
+                    Búsqueda de Opciones de Menu por Sistema
+                </div>
+
+                <div class="panel-body">   
+
+                    <b:row>
+                        <b:column class="col-md-3">
+                            <h:outputText class="font-weight-bold" value="Seleccione un sistema de la lista: "/>
+                        </b:column>
+                        <b:column class="col-md-9">
+                            <b:selectOneMenu id="sltSistema" 
+                                             value="#{moduloControlador.sistema.sisId}" 
+                                             required="false"
+                                             colMd="12">
+                                <f:selectItem itemValue="0" itemLabel="Seleccione Sistema"/>
+                                <f:selectItems value="#{moduloControlador.listarSistemas()}" 
+                                               var="sistema" 
+                                               itemValue="#{sistema.sisId}" 
+                                               itemLabel="#{sistema.sisNombre}"/>
+                                <f:ajax render="frm" listener="#{moduloControlador.listarModulos()}"/>
+                            </b:selectOneMenu>
+                        </b:column>
+                    </b:row>               
+                </div>
+            </div>
+            <!-- FIN DE FILTRADO DE DATOS -->
+
+
+            <div class="panel panel-dark">
+                <div class="panel-heading font-weight-bold">
+                    Modulos Registrados
+                </div>
+
+                <div class="panel-body">
+
+
+                    <div class="row">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Agregar"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm" action="#{moduloControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 class="mb-3"
+                                                 size="block" />
+
+                            </b:form>     
+                        </div>
+                    </div>
+                    <hr/>
+
+                    <b:dataTable  value="#{moduloControlador.listarModulos()}"
+                                  var="modulo" styleClass="table-sm" id="tblUsuarios"
+                                  responsive="true"
+                                  style="width:100%"
+                                  page-length-menu="10,20,50">
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{modulo.mdsNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Orden"/>
+                            </f:facet>
+                            <h:outputText value="#{modulo.mdsOrden}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Sistema"/>
+                            </f:facet>
+                            <h:outputText value="#{modulo.secSisSistemas.sisNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+
+                            <b:commandButton oncomplete="$('.edit').modal();"  
+                                             process="@this"  
+                                             update=":modForm" 
+                                             iconAwesome="fa fa-edit" 
+                                             look="secondary" 
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{modulo}" target="#{moduloControlador.modulo}"/>
+                            </b:commandButton>&nbsp;
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{moduloControlador.borrar()}"
+                                             process="@this"
+                                             styleClass="btn btn-danger btn-sm btn-del"
+                                             update="@form">
+                                <f:setPropertyActionListener value="#{modulo}" target="#{moduloControlador.modulo}"/>       
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este modulo?" icon="ui-icon-alert" />
+                            </p:commandButton>
+
+                        </b:dataTableColumn>                           
+                    </b:dataTable>
+
+
+                </div>
+            </div>
+
+        </h:form>
+
+        <b:modal title="Modificar Módulo" styleClass="formModal edit"
+                 closable="false"
+                 closeOnEscape="true">
+            <b:form id="modForm">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText id="moduloCodEdit" 
+                                 placeholder="Nombre del modulo" 
+                                 value="#{moduloControlador.modulo.mdsNombre}"  
+                                 requiredMessage="Nombre de módulo requerido" 
+                                 required="true" 
+                                 colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Orden:</label>
+                    <b:inputText id="moduloOrdenEdit" 
+                                 placeholder="Orden del modulo" 
+                                 value="#{moduloControlador.modulo.mdsOrden}"   
+                                 mask="numeric"
+                                 class="text-left"
+                                 requiredMessage="Orden de módulo requerido"
+                                 required="true" 
+                                 colMd="12"/>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Sistema:</label>
+                    <b:selectOneMenu 
+                        id="sltSistemaEdit" 
+                        value="#{moduloControlador.modulo.secSisSistemas.sisId}" 
+                        requiredMessage="Sistema es requerido" 
+                        colMd="12" 
+                        required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione" noSelectionOption="true"/>
+                        <f:selectItems value="#{moduloControlador.listarSistemas()}" 
+                                       var="sistema" 
+                                       itemValue="#{sistema.sisId}" 
+                                       itemLabel="#{sistema.sisNombre}"/>
+                        <f:ajax listener="#{moduloControlador.setSistemaMod(sistema.sisId)}"></f:ajax>
+                    </b:selectOneMenu>
+                </div>
+
+                <b:messages class="font-weight-bold" ></b:messages>
+
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.edit').modal('hide')" 
+                                       update="modForm" 
+                                       action="#{moduloControlador.reset()}"
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="modForm frm"
+                                     action="#{moduloControlador.actualizar()}"
+                                     value="Actualizar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('.edit').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+    </ui:define>
+
+</ui:composition>

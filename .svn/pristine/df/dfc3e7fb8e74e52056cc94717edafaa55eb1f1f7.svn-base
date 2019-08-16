@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"                
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Parámetros
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form 
+            id="parFrm"
+            prependId="false"
+            styleClass="form-horizontal">
+
+            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Nuevo Parámetro
+                </div>
+
+                <div class="panel-body">
+                    <div class="form-group">
+                        <p:outputLabel 
+                            id="lblCodigo"
+                            for="txtCodigo"
+                            value="Código"
+                            styleClass="col-lg-2 control-label"/>
+                        <div class="col-lg-3">
+                            <h:inputText
+                                id="txtCodigo"
+                                value="#{parametroControlador.parametro.parCodigo}"
+                                required="true"
+                                styleClass="form-control"
+                                />
+                        </div>
+
+                        <p:outputLabel 
+                            id="lblValor"
+                            for="txtValor"
+                            value="Valor"
+                            styleClass="col-lg-2 control-label"/>
+                        <div class="col-lg-3">
+                            <h:inputText
+                                id="txtValor"
+                                value="#{parametroControlador.parametro.parValor}"
+                                required="true"
+                                styleClass="form-control"
+                                />
+                        </div>
+                    </div>    
+
+                    <div class="form-group">
+                        <p:outputLabel 
+                            id="lblDesc"
+                            for="txtDesc"
+                            value="Descripción"
+                            styleClass="col-lg-2 control-label"/>
+                        <div class="col-lg-8">
+                            <h:inputTextarea
+                                id="txtDesc"
+                                value="#{parametroControlador.parametro.parDescripcion}"
+                                styleClass="form-control"
+                                />
+                        </div>                        
+                    </div>
+
+                </div>    
+
+                <div class="panel-footer">
+                    <div class="form-group ">
+                        <div class="col-lg-2  col-lg-offset-2">
+                            <h:commandButton id="cmdReset"
+                                             value="Limpiar"
+                                             action="#{parametroControlador.reset()}"
+                                             styleClass="btn btn-warning btn-block">
+                                <f:ajax execute="@this" render="parFrm"/>                
+                            </h:commandButton>
+                        </div>                          
+                        <div class="col-lg-2">
+                            <h:commandButton id="cmdGuardar"
+                                             value="Guardar"
+                                             action="#{parametroControlador.guardar()}"
+                                             styleClass="btn btn-primary btn-block">
+                                <f:ajax execute="parFrm" render="parFrm"/>                
+                            </h:commandButton>
+                        </div>                      
+                    </div>  
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Parámetros Registrados
+                </div>
+
+                <div class="panel-body">
+                    <p:dataTable id="tblParametros"
+                                 value="#{parametroControlador.listarParametros()}"
+                                 var="parametro"
+                                 styleClass="table"
+                                 reflow="true"
+                                 resizableColumns="true"
+                                 draggableColumns="true">
+
+                        <p:column headerText="Código">
+                            <h:outputText value="#{parametro.parCodigo}"/>
+                        </p:column>
+
+                        <p:column headerText="Descripción">
+                            <h:outputText value="#{parametro.parDescripcion}"/>
+                        </p:column>     
+
+                        <p:column headerText="Valor">
+                            <h:outputText value="#{parametro.parValor}"/>
+                        </p:column>  
+
+                        <p:column headerText="">                         
+
+                            <p:commandButton id="cmdEditar"
+                                             icon="fa fa-pencil"
+                                             title="Editar"
+                                             process="@this"
+                                             update=":frmParUpd"
+                                             oncomplete="PF('dlgParUpd').show();">
+                                <f:setPropertyActionListener value="#{parametro}" target="#{parametroControlador.parametro}"/>
+                            </p:commandButton>   
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             process="@this"
+                                             update="@form"
+                                             action="#{parametroControlador.borrar()}">
+                                <f:setPropertyActionListener value="#{parametro}" target="#{parametroControlador.parametro}"/>        
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este parámetro?" icon="ui-icon-alert" />
+                            </p:commandButton>
+                        </p:column>                         
+                    </p:dataTable>                    
+                </div>                
+            </div>          
+
+        </h:form>
+
+        <p:dialog id="dlgParUpd"
+                  widgetVar="dlgParUpd"
+                  resizable="false" 
+                  modal="true" 
+                  closeOnEscape="true"
+                  header="Actualizar Parámetro">
+            <h:form id="frmParUpd"
+                    prependId="false"
+                    styleClass="form-horizontal">
+
+                <div class="form-group">
+                    <p:outputLabel 
+                        id="lblCodigoUpd"
+                        for="txtCodigoUpd"
+                        value="Código"
+                        styleClass="col-lg-2 control-label"/>
+                    <div class="col-lg-3">
+                        <h:inputText
+                            id="txtCodigoUpd"
+                            value="#{parametroControlador.parametro.parCodigo}"
+                            required="true"
+                            styleClass="form-control"
+                            />
+                    </div>
+
+                    <p:outputLabel 
+                        id="lblValorUpd"
+                        for="txtValorUpd"
+                        value="Valor"
+                        styleClass="col-lg-2 control-label"/>
+                    <div class="col-lg-3">
+                        <h:inputText
+                            id="txtValorUpd"
+                            value="#{parametroControlador.parametro.parValor}"
+                            required="true"
+                            styleClass="form-control"
+                            />
+                    </div>
+                </div>    
+
+                <div class="form-group">
+                    <p:outputLabel 
+                        id="lblDescUpd"
+                        for="txtDescUpd"
+                        value="Descripción"
+                        styleClass="col-lg-2 control-label"/>
+                    <div class="col-lg-8">
+                        <h:inputTextarea
+                            id="txtDescUpd"
+                            value="#{parametroControlador.parametro.parDescripcion}"
+                            styleClass="form-control"
+                            />
+                    </div>                        
+                </div>                
+
+                <div class="form-group">
+                    <div class="col-lg-3 col-lg-offset-2">
+                        <p:commandButton id="cmdActualizar"
+                                         value="Actualizar"
+                                         action="#{parametroControlador.actualizar()}"
+                                         process="frmParUpd"
+                                         update="frmParUpd :parFrm"
+                                         oncomplete="PF('dlgParUpd').hide();"
+                                         styleClass="btn btn-block">            
+                        </p:commandButton>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>        
+    </ui:define>
+
+</ui:composition>

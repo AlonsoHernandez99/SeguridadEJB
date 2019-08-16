@@ -1,0 +1,171 @@
+package com.seguridad.controlador;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import com.seguridad.dto.Modulo;
+import com.seguridad.dto.OpcionMenu;
+import com.seguridad.dto.Rol;
+import com.seguridad.dto.Sistema;
+import com.seguridad.modelo.SecSisSistemas;
+import com.seguridad.servicio.ModuloService;
+import com.seguridad.servicio.RolServicio;
+
+@Named
+@ViewScoped
+public class RolControlador implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Rol rol;
+    private Modulo modulo;
+    private SecSisSistemas sistema;
+    private Set<OpcionMenu> opciones;
+
+    @Inject
+    private RolServicio rolServ;
+    
+    @Inject
+    private ModuloService mdServ;
+
+    public RolControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        this.rol = new Rol();
+        this.modulo = new Modulo();
+        this.sistema = new SecSisSistemas();
+        this.opciones = new HashSet<>();
+    }
+    
+    public List<SecSisSistemas> listarSistemas() {
+        return mdServ.listarSistemas();
+    }
+
+
+    public List<Sistema> obtenerSistemas() {
+        List<Sistema> listaSistemas = rolServ.obtenerSistemas();
+        return listaSistemas;
+    }
+
+    public List<Modulo> listarModulosPorSistemas() {
+        return rolServ.listarModulosPorSistemas(rol);
+    }
+
+    public List<OpcionMenu> listarOpcionesPorModulo() {
+        return rolServ.listarOpcionesPorModulo(modulo);
+    }
+
+    public List<Rol> listarRoles() {
+        List<Rol> listRoles = rolServ.findAll(sistema.getSisId());
+        return listRoles;
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            rolServ.save(rol);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Rol almacenado.");
+        } catch (RuntimeException e) {
+            Logger.getLogger(RolControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar el registro", e);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo guardar el rol.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.rol = new Rol();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            rolServ.remove(rol);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Rol borrado.");
+        } catch (RuntimeException e) {
+            Logger.getLogger(RolControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar el registro", e);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el rol.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.rol = new Rol();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            rolServ.merge(rol);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Rol actualizado.");
+        } catch (RuntimeException e) {
+            Logger.getLogger(RolControlador.class.getName()).log(Level.SEVERE, "No se pudo merge el registro", e);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el rol.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.rol = new Rol();
+    }
+
+    public void obtenerOpciones() {
+        opciones = rolServ.obtenerOpciones(rol);
+    }
+
+    public void asignarOpciones() {
+        FacesMessage msj;
+
+        try {
+            rolServ.asignarOpciones(rol, modulo, opciones);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Las opciones seleccionadas fueron asignadas al rol.");
+        } catch (RuntimeException e) {
+            Logger.getLogger(RolControlador.class.getName()).log(Level.SEVERE, "No se pudo merge el registro", e);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudieron asignar las opciones seleccionadas.");
+        }
+        this.reset();
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+    }
+
+    public void reset() {
+        this.modulo = new Modulo();
+        this.rol = new Rol();
+        this.opciones = new HashSet<>();
+    }
+
+    public Rol getRol() {
+        return rol;
+    }
+
+    public void setRol(Rol rol) {
+        this.rol = rol;
+    }
+
+    public Set<OpcionMenu> getOpciones() {
+        return opciones;
+    }
+
+    public void setOpciones(Set<OpcionMenu> opciones) {
+        this.opciones = opciones;
+    }
+
+    public Modulo getModulo() {
+        return modulo;
+    }
+
+    public void setModulo(Modulo modulo) {
+        this.modulo = modulo;
+    }
+
+    public SecSisSistemas getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(SecSisSistemas sistema) {
+        this.sistema = sistema;
+    }
+
+}

@@ -1,0 +1,473 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"                
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Asignación de Roles A Usuarios
+    </ui:define>
+
+    <ui:define name="content">
+
+        <style>
+            .modal-open {overflow-y: auto}
+            .div-iframe{
+                position: relative;
+                overflow: hidden;
+                padding-top: 56.25%;
+            }
+            [data-notify] { z-index: 9999 !important; }
+        </style>
+
+
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>        
+
+        <b:form>
+            <b:remoteCommand oncomplete="$('#modalUsuarios').modal('hide');$('.modal-backdrop').remove();$('.add').modal('show')" name="updateForm" ajax="true" update="addForm"/>
+            <b:remoteCommand name="updateMsj" ajax="true" update="editForm:mensajes"/>
+            <b:remoteCommand name="clearBean" ajax="true" action="#{usuariosSistemaControlador.reset()}"/>
+        </b:form>
+        <script>
+            function clickData() {
+                document.getElementById('iframe').contentWindow.document.getElementById('enviarDatos').click();
+            }
+
+        </script>
+
+
+
+        <!-- FORMULARIO MODAL PARA AGREGAR NUEVO USUARIO -->
+        <b:form id="addForm" class="mx-1">
+            <b:modal title="Roles a Usuario" styleClass="responsiveModalPseudoClass add"
+                     closable="false"
+                     size="modal-lg"
+                     backdrop="false"
+                     closeOnEscape="true">
+                <div class="panel panel-dark">
+                    <div class="panel-heading">
+                        Búsqueda de Usuarios Sin Roles
+                    </div>
+
+                    <div class="panel-body">   
+                        <b:row>
+                            <b:column class="col-md-1">
+                                <h:outputText style="color: #666 !important;"  class="font-weight-bold mx-4" value="Usuario: "/>
+                            </b:column>
+                            <b:column class="col-md-3 col-lg-3">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.usuarioToSelect.usrCodigo}"/>
+                            </b:column>
+                            <b:column class="col-md-7 col-lg-7">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.usuarioToSelect.usrNombre}"/>
+                            </b:column>
+
+                            <b:column class="col-md-1 col-lg-1">
+                                <b:commandButton
+                                    oncomplete="$('#modalUsuarios').modal();"  
+                                    update=":usuariosForm" action="#{usuariosSistemaControlador.obtenerUsuariosSinRolEnSistema()}"
+                                    iconAwesome="fas fa-list" 
+                                    title="Desplegar Listado de Usuarios"   
+                                    look="primary" 
+                                    style="margin-top: -3px;"
+                                    size="sm" />
+
+                            </b:column>
+                        </b:row>
+                        <b:row>
+                            <b:column class="col-md-1">
+                                <h:outputText style="color: #666 !important;"  class="font-weight-bold mx-4" value="Sistema: "/>
+                            </b:column>
+                            <b:column class="col-md-10 col-lg-10">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.sistema.sisNombre}"/>
+                            </b:column>
+                        </b:row>
+
+                        <h:panelGroup id="tabView">
+                            <b:tabView activeIndex="#{usuariosSistemaControlador.activeTab}"  ajax="true" contentStyle="border: 1px solid #ddd;padding:10px">
+                                <b:tab title="Roles">
+                                    <f:facet name="anchor"><b:iconAwesome name="fas fa-user-shield" /></f:facet>
+                                    <b:row class="m-1">
+                                        <b:column class="col-md-12">
+                                            <p:pickList value="#{usuariosSistemaControlador.roles}"
+                                                        var="rol"
+                                                        itemLabel="#{rol.rolNombre}"
+                                                        itemValue="#{rol}"
+                                                        converter="rolConverter"
+                                                        responsive="true">
+                                                <f:facet name="sourceCaption">Roles Sin Acceso</f:facet>
+                                                <f:facet name="targetCaption">Roles Con Acceso</f:facet>
+                                                <p:ajax event="transfer" listener="#{usuariosSistemaControlador.checkDisableBtn()}" update="addForm:btnSave"/>
+                                            </p:pickList>
+                                        </b:column>
+                                    </b:row>
+                                    <b:row rendered="#{usuariosSistemaControlador.usuarioToSelect.usrCodigo.length() > 0}">
+                                        <b:column class="col-md-12">
+                                            <p:orderList  responsive="true" value="#{usuariosSistemaControlador.opciones}" var="opcion" controlsLocation="none" itemLabel="#{opcion}" itemValue="#{opcion}">
+                                                <f:facet name="caption">Opciones Con Acceso en los Roles</f:facet>
+                                            </p:orderList>
+                                        </b:column>
+                                    </b:row>
+                                </b:tab>
+                                <b:tab disabled="#{usuariosSistemaControlador.disabledTab}" content-disabled="false" title="Seguridad de Sistema">
+                                    <f:facet name="anchor"><b:iconAwesome name="fas fa-shield-alt" /></f:facet>
+                                    <div style="padding-bottom:50.25%; position:relative; display:block; width: 100%">
+                                        <iframe id="iframe" src="#{usuariosSistemaControlador.urlIframe}" width="100%" height="100%"  frameBorder="0"  style="position:absolute; top:0; left: 0" />
+                                    </div>
+
+                                </b:tab>
+                            </b:tabView>
+                        </h:panelGroup>
+                    </div>
+                </div>
+                <b:fetchBeanInfos />
+                <b:row>
+                    <b:column>
+                        <b:messages/>
+                    </b:column>
+                </b:row>
+
+                <div class="modal-footer">
+                    <b:button 
+                        value="Cerrar"
+                        dismiss="modal"
+                        look="danger"
+                        onclick="clearBean()"
+                        iconAwesome="fas fa-sign-out-alt">
+                    </b:button>
+
+                    <!--                    <b:commandButton   
+                                            value="Cerrar"
+                                            oncomplete="$('.add').modal('hide');$('body').removeClass('modal-open');$('.modal-backdrop').remove();" 
+                                            update="addForm" 
+                                            action="#usuariosSistemaControlador.reset()} $('.add').modal('hide');javascript:clickData();" 
+                                            look="danger"
+                                            iconAwesome="fas fa-sign-out-alt"/>-->
+                    <h:panelGroup id="panelBtn">
+                        <b:commandButton id="btnSave"
+                                         update="frmUser tabView addForm:panelBtn" 
+                                         process="@this"
+                                         immediate="true" 
+                                         rendered="#{usuariosSistemaControlador.activeTab == 0}"
+                                         disabled="#{usuariosSistemaControlador.disableBtn}"
+                                         oncomplete="if(!validationFailed) {  }"
+                                         action="#{usuariosSistemaControlador.saveData()}"
+                                         value="Guardar" look="primary"
+                                         iconAwesome="far fa-save">
+
+                        </b:commandButton>
+                    </h:panelGroup>
+                </div>
+            </b:modal>      
+        </b:form>
+        <!-- FIN DE FORMULARIO MODAL PARA AGREGAR UN NUEVO USUARIO -->
+
+
+        <!-- FORMULARIO MODAL PARA EDITAR NUEVO USUARIO -->
+        <b:modal title="Roles a Usuario" styleClass="formModal edit"
+                 closable="false"
+                 size="modal-lg"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="editForm" class="mx-1">
+
+                <div class="panel panel-dark">
+                    <div class="panel-heading">
+                        Edición de Roles de Usuario
+                    </div>
+
+                    <div class="panel-body">   
+                        <b:row>
+                            <b:column class="col-md-1">
+                                <h:outputText style="color: #666 !important;"  class="font-weight-bold mx-4" value="Usuario: "/>
+                            </b:column>
+                            <b:column class="col-md-4 col-lg-4">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.usuarioToSelect.usrCodigo}"/>
+                            </b:column>
+                            <b:column class="col-md-7 col-lg-8">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.usuarioToSelect.usrNombre}"/>
+                            </b:column>
+                        </b:row>
+                        <b:row>
+                            <b:column class="col-md-1">
+                                <h:outputText style="color: #666 !important;"  class="font-weight-bold mx-4" value="Sistema: "/>
+                            </b:column>
+                            <b:column class="col-md-12 col-lg-12">
+                                <b:inputText colMd="12" readonly="true" value="#{usuariosSistemaControlador.sistema.sisNombre}"/>
+                            </b:column>
+                        </b:row>
+
+
+
+                        <b:tabView activeIndex="#{usuariosSistemaControlador.activeTab}" contentStyle="border: 1px solid #ddd;padding:10px">
+                            <b:tab title="Roles">
+                                <f:facet name="anchor"><b:iconAwesome name="fas fa-user-shield" /></f:facet>
+                                <b:row class="m-1">
+                                    <b:column class="col-md-12">
+                                        <p:pickList value="#{usuariosSistemaControlador.roles}"
+                                                    var="rol"
+                                                    itemLabel="#{rol.rolNombre}"
+                                                    itemValue="#{rol}"
+                                                    responsive="true"
+                                                    converter="rolConverter">
+                                            <f:facet name="sourceCaption">Roles Sin Acceso</f:facet>
+                                            <f:facet name="targetCaption">Roles Con Acceso</f:facet>
+                                            <p:ajax event="transfer" listener="#{usuariosSistemaControlador.onTransfer}" />
+                                        </p:pickList>
+                                    </b:column>
+                                </b:row>
+                                <b:row rendered="#{usuariosSistemaControlador.usuarioToSelect.usrCodigo.length() > 0}">
+                                    <b:column class="col-md-12">
+                                        <p:orderList  responsive="true" value="#{usuariosSistemaControlador.opciones}" var="opcion" controlsLocation="none" itemLabel="#{opcion}" itemValue="#{opcion}">
+                                            <f:facet name="caption">Opciones Con Acceso en los Roles</f:facet>
+                                        </p:orderList>
+                                    </b:column>
+                                </b:row>
+                            </b:tab>
+                            <b:tab disabled="false" content-disabled="false" title="Seguridad de Sistema">
+                                <f:facet name="anchor"><b:iconAwesome name="fas fa-shield-alt" /></f:facet>
+                                <div style="padding-bottom:53.75%; position:relative; display:block; width: 100%">
+                                    <iframe id="iframeUpd" src="#{usuariosSistemaControlador.urlIframe}" width="100%" height="100%"  frameBorder="0"  style="position:absolute; top:0; left: 0" />
+                                </div>
+                            </b:tab>
+                        </b:tabView>
+                    </div>
+                </div>
+                <b:fetchBeanInfos />
+                <b:row>
+                    <b:column>
+                        <b:messages id="mensajes"/>
+                    </b:column>
+                </b:row>
+                <div class = "modal-footer">
+                    <b:commandButton  
+                        value="Cerrar"
+                        action="#{usuariosSistemaControlador.validateEmptyRoles()}"
+                        update="editForm" 
+                        look="danger"
+                        iconAwesome="fas fa-sign-out-alt">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>          
+        <!-- FIN DE FORMULARIO MODAL PARA EDITAR UN NUEVO USUARIO -->
+
+
+        <!-- FORMULARIO MODAL PARA AGREGAR NUEVO USUARIO -->
+        <b:modal title="Usuarios Sin Roles" styleClass="responsiveModalPseudoClass" id="modalUsuarios"
+                 closable="false"
+                 size="modal-lg"
+                 backdrop="false"
+                 closeOnEscape="true">
+            <b:form id="usuariosForm" class="mx-1">
+                <b:dataTable value="#{usuariosSistemaControlador.usuariosSinRoles}"
+                             var="usuario" id="tblUsuariosSinRoles"
+                             page-length="10" widgetVar="S"
+                             class="tbl"
+                             page-length-menu="10,20,50"
+                             selection-mode="single"
+                             onselect="ajax:usuariosSistemaControlador.setUsuarioToSelect(usuario, 'add');javascript:updateForm();" >
+
+                    <b:dataTableColumn>
+                        <f:facet name="header">
+                            <h:outputText value="Código"/>
+                        </f:facet>
+                        <h:outputText value="#{usuario.usrCodigo}" style="cursor: pointer;"/>
+                    </b:dataTableColumn>    
+                    <b:dataTableColumn>
+                        <f:facet name="header">
+                            <h:outputText value="Nombre"/>
+                        </f:facet>
+                        <h:outputText value="#{usuario.usrNombre}" style="cursor: pointer;"/>
+                    </b:dataTableColumn>
+
+                </b:dataTable>
+                <div class="modal-footer">
+                    <b:button 
+                        value="Cerrar"
+                        dismiss="modal"
+                        look="danger"
+                        iconAwesome="fas fa-sign-out-alt">
+                    </b:button>
+                </div>
+            </b:form>
+        </b:modal>          
+        <!-- FIN DE FORMULARIO MODAL PARA AGREGAR UN NUEVO USUARIO -->
+
+        <h:form id="frmUser"
+                prependId="false"
+                styleClass="form-horizontal">
+
+            <!--            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>-->
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info error warn"/>
+
+            <!-- FILTRO DE DATOS -->
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Búsqueda de Usuarios por Sistema
+                </div>
+
+                <div class="panel-body">   
+
+                    <b:row>
+                        <b:column class="col-md-3">
+                            <h:outputText class="font-weight-bold" value="Seleccione un sistema de la lista: "/>
+                        </b:column>
+                        <b:column class="col-md-9">
+                            <b:selectOneMenu id="sltSistema" 
+                                             value="#{usuariosSistemaControlador.sistema.sisId}" 
+                                             required="false"
+                                             colMd="12">
+                                <f:selectItem itemValue="0" itemLabel="Seleccione Sistema"/>
+                                <f:selectItems value="#{usuariosSistemaControlador.listarSistemas()}" 
+                                               var="sistema" 
+                                               itemValue="#{sistema.sisId}" 
+                                               itemLabel="#{sistema.sisNombre}"/>
+                                <f:ajax render="frmUser" listener="#{usuariosSistemaControlador.listarUsuarios()}"/>
+                            </b:selectOneMenu>
+                        </b:column>
+                    </b:row>               
+                </div>
+            </div>
+            <!-- FIN DE FILTRADO DE DATOS -->
+
+
+
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Usuarios En Sistema
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-3">
+                            <b:form>
+                                <b:commandButton rendered="#{usuariosSistemaControlador.sistema.sisId > 0}" value="Agregar Roles a Usuario"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm"
+                                                 action="#{usuariosSistemaControlador.findRol('add')}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+
+                            </b:form>     
+                        </div>
+                    </div>   
+                    <hr/>
+
+                    <b:dataTable  value="#{usuariosSistemaControlador.listarUsuarios()}"
+                                  var="usuario" id="tblUsuarios"
+                                  page-length="10" widgetVar="P"
+                                  responsive="true"
+                                  style="width: 100%"
+                                  page-length-menu="10,20,50">
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Código"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrCodigo}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Correo"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrCorreo}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Fecha de Creación"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrFechaIngreso}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Estado"/>
+                            </f:facet>
+                            <h:outputText value="#{usuario.usrEstado}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn class="text-center">
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+                            <b:commandButton
+                                oncomplete="$('.edit').modal();"  
+                                update="editForm"
+                                action="#{usuariosSistemaControlador.findRol('upd')}"
+                                iconAwesome="fa fa-edit"
+                                look="secondary" 
+                                title="Editar Roles de Usuario"
+                                size="xs">
+                                <f:ajax  listener="#{usuariosSistemaControlador.setUsuarioToSelect(usuario,'upd')}"/>
+                            </b:commandButton>
+
+                            <p:commandButton id="cmdDesactivar"
+                                             icon="fa fa-user-slash"
+                                             title="Desactivar Usuario"
+                                             rendered="#{usuariosSistemaControlador.getEstadoOfUsuarioSistema(usuario).equals('ACT')}"
+                                             action="#{usuariosSistemaControlador.cambiarEstadoUsuario('INC')}"
+                                             process="@this"
+                                             styleClass="btn btn-danger btn-del mx-2"
+                                             update=":frmUser">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuariosSistemaControlador.usuarioToSelect}"/>
+                                <p:confirm header="Confirmación" message="¿En verdad desea desactivar este usuario del sistema?" icon="ui-icon-alert" />
+                            </p:commandButton>
+
+                            <p:commandButton id="cmdActivar"
+                                             icon="fa fa-user-check"
+                                             title="Activar Usuario"
+                                             rendered="#{usuariosSistemaControlador.getEstadoOfUsuarioSistema(usuario).equals('INC')}"
+                                             action="#{usuariosSistemaControlador.cambiarEstadoUsuario('ACT')}"
+                                             process="@this"
+                                             styleClass="btn btn-warning btn-del mx-2"
+                                             update=":frmUser">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuariosSistemaControlador.usuarioToSelect}"/>
+                                <p:confirm header="Confirmación" message="¿En verdad desea Activar este usuario del sistema?" icon="ui-icon-alert" />
+                            </p:commandButton>
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{usuariosSistemaControlador.borrar()}"
+                                             process="@this"
+                                             styleClass="btn btn-info btn-del"
+                                             update=":frmUser">
+                                <f:setPropertyActionListener value="#{usuario}" target="#{usuariosSistemaControlador.usuarioToSelect}"/>
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este usuario del sistema?" icon="ui-icon-alert" />
+                            </p:commandButton>
+
+                        </b:dataTableColumn>                           
+                    </b:dataTable>
+                </div>
+            </div>
+
+        </h:form>
+
+    </ui:define>
+
+</ui:composition>

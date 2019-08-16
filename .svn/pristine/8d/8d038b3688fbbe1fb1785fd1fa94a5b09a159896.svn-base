@@ -1,0 +1,206 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Modulos
+    </ui:define>
+
+    <ui:define name="content">
+        
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>             
+        
+        <h:form id="frm"
+                prependId="false"
+                styleClass="form-horizontal">
+
+            <p:messages id="msjs" autoUpdate="true" showSummary="true" showDetail="true" closable="true"/>
+            
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Nuevo Modulo
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="form-group">
+                        <p:outputLabel id="lblNombre" for="txtNombre" value="Nombre" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:inputText id="txtNombre" 
+                                         value="#{moduloControlador.modulo.mdsNombre}" 
+                                         required="true"
+                                         styleClass="form-control"/>
+                        </div>
+
+                        <p:outputLabel id="lblOrden" for="txtOrden" value="Orden" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:inputText id="txtOrden" 
+                                         value="#{moduloControlador.modulo.mdsOrden}" 
+                                         required="true"
+                                         styleClass="form-control"/>
+                        </div>                           
+                    </div>                       
+
+                    <div class="form-group">                                                                        
+
+                        <p:outputLabel id="lblSistema" for="sltSistema" value="Sistema" styleClass="col-lg-2 control-label" />
+                        <div class="col-lg-3">
+                            <h:selectOneMenu id="sltSistema" 
+                                             value="#{moduloControlador.modulo.secSisSistemas.sisId}" 
+                                             required="true"
+                                             styleClass="form-control">
+                                <f:selectItem itemValue="" itemLabel="Seleccione" noSelectionOption="true"/>
+                                <f:selectItems value="#{moduloControlador.listarSistemas()}" 
+                                               var="sistema" 
+                                               itemValue="#{sistema.sisId}" 
+                                               itemLabel="#{sistema.sisNombre}"/>
+                            </h:selectOneMenu>
+                        </div>                           
+
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <div class="form-group">
+                        <div class="col-lg-2 col-lg-offset-2">
+                            <h:commandButton id="cmdReset"
+                                             value="Limpiar"
+                                             action="#{moduloControlador.reset()}"
+                                             styleClass="btn btn-warning btn-block">
+                                <f:ajax execute="@this" render="frm"/>                
+                            </h:commandButton>
+                        </div>                        
+                        
+                        <div class="col-lg-2">
+                            <h:commandButton id="cmdGuardar"
+                                             value="Guardar"
+                                             action="#{moduloControlador.guardar()}"
+                                             styleClass="btn btn-primary btn-block">
+                                <f:ajax execute="frm" render="frm"/>                
+                            </h:commandButton>
+                        </div>
+                    </div>                    
+                </div>
+            </div>
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Modulos Registrados
+                </div>
+
+                <div class="panel-body">
+                    <p:dataTable id="tblUsuarios"
+                                 value="#{moduloControlador.listarModulos()}"
+                                 var="modulo"
+                                 styleClass="table" reflow="true"
+                                 resizableColumns="true"
+                                 draggableColumns="true">
+
+                        <p:column headerText="Nombre">
+                            <h:outputText value="#{modulo.mdsNombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Orden">
+                            <h:outputText value="#{modulo.mdsOrden}"/>
+                        </p:column>
+
+                        <p:column headerText="Sistema">
+                            <h:outputText value="#{modulo.secSisSistemas.sisNombre}"/>
+                        </p:column>                   
+
+                        <p:column headerText="">
+
+                            <p:commandButton id="cmdMostrar"
+                                             icon="fa fa-pencil"
+                                             title="Editar"
+                                             process="@this"
+                                             update=":frmUpd"
+                                             oncomplete="PF('dlgUpd').show();">
+                                <f:setPropertyActionListener value="#{modulo}" target="#{moduloControlador.modulo}"/>
+                            </p:commandButton>
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{moduloControlador.borrar()}"
+                                             process="@this"
+                                             update="@form">
+                                <f:setPropertyActionListener value="#{modulo}" target="#{moduloControlador.modulo}"/>       
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este modulo?" icon="ui-icon-alert" />
+                            </p:commandButton>
+                        </p:column>                              
+                    </p:dataTable>
+                </div>
+            </div>
+
+        </h:form>
+
+        <p:dialog id="dlgUpd"
+                  widgetVar="dlgUpd"
+                  resizable="false" 
+                  modal="true" 
+                  closeOnEscape="true"
+                  header="Actualizar Modulo">
+            <h:form id="frmUpd"
+                    prependId="false"
+                    styleClass="form-horizontal">
+                <div class="form-group">
+                    <h:outputLabel id="lblNombreUpd" for="txtNombreUpd" value="Nombre" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:inputText id="txtNombreUpd" 
+                                     value="#{moduloControlador.modulo.mdsNombre}" 
+                                     required="true"
+                                     styleClass="form-control"/>
+                    </div>
+
+                    <h:outputLabel id="lblOrdenUpd" for="txtOrdenUpd" value="Orden" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:inputText id="txtOrdenUpd" 
+                                     value="#{moduloControlador.modulo.mdsOrden}" 
+                                     required="true"
+                                     styleClass="form-control"/>
+                    </div>                           
+                </div>                       
+
+                <div class="form-group">                                                                        
+
+                    <h:outputLabel id="lblSistemaUpd" for="sltSistemaUpd" value="Sistema" styleClass="col-lg-2 control-label" />
+                    <div class="col-lg-3">
+                        <h:selectOneMenu id="sltSistemaUpd" 
+                                         value="#{moduloControlador.modulo.secSisSistemas.sisId}" 
+                                         required="true"
+                                         styleClass="form-control">
+                            <f:selectItem itemValue="" itemLabel="Seleccione" noSelectionOption="true"/>
+                            <f:selectItems value="#{moduloControlador.listarSistemas()}" 
+                                           var="sistema" 
+                                           itemValue="#{sistema.sisId}" 
+                                           itemLabel="#{sistema.sisNombre}"/>
+                        </h:selectOneMenu>
+                    </div>                           
+
+                </div>
+
+                <div class="form-group">
+                    <div class="col-lg-3 col-lg-offset-2">
+                        <p:commandButton id="cmdActualizar"
+                                         value="Actualizar"
+                                         action="#{moduloControlador.actualizar()}"
+                                         process="frmUpd"
+                                         update="frmUpd :frm"
+                                         oncomplete="PF('dlgUpd').hide();"
+                                         styleClass="btn btn-block">            
+                        </p:commandButton>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

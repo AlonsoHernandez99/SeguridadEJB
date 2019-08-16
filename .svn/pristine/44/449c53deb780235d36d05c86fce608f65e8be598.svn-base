@@ -1,0 +1,472 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Opciones de Menu
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>     
+
+
+        <b:modal title="Agregar Opcion de Menu" styleClass="formModal add"
+                 closable="false"
+                 closeOnEscape="true"
+                 backdrop="false"
+                 size="modal-lg">
+            <b:form id="addForm" class="mx-5">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Etiqueta:</label>
+                    <b:inputText 
+                        id="txtEtiqueta" 
+                        placeholder="Etiqueta de la opción" 
+                        value="#{opcionesMenuControlador.opcion.opmEtiqueta}" 
+                        requiredMessage="Etiqueta es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Comando:</label>
+                    <b:inputText 
+                        id="txtComando" 
+                        placeholder="Comando de la opción" 
+                        value="#{opcionesMenuControlador.opcion.opmComando}" 
+                        requiredMessage="Comando es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Orden:</label>
+                    <b:inputText id="txtOrden" 
+                                 placeholder="Orden del opción" 
+                                 value="#{opcionesMenuControlador.opcion.opmOrden}"    
+                                 mask="numeric"
+                                 class="text-left"
+                                 requiredMessage="Orden es requerido" 
+                                 required="true" 
+                                 colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu 
+                        id="sltEstado" 
+                        value="#{opcionesMenuControlador.opcion.opmEstado}" 
+                        requiredMessage="Estado es requerido" 
+                        colMd="12" 
+                        required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                        <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Módulo:</label>
+                    <b:selectOneMenu id="sltModulo" 
+                                     value="#{opcionesMenuControlador.opcion.secMdsModulosSistemas.mdsId}" 
+                                     required="true"
+                                     colMd="12"
+                                     requiredMessage="Módulo es requerido" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Módulo" noSelectionOption="true"/>
+                        <f:selectItems value="#{opcionesMenuControlador.listarModulosBySistema()}" 
+                                       var="modulo" 
+                                       itemValue="#{modulo.mdsId}" 
+                                       itemLabel="#{modulo.mdsNombre.concat('/').concat(modulo.secSisSistemas.sisNombre)}"/>
+                        <f:ajax execute="@this" render="sltOpPadre"/>
+                    </b:selectOneMenu>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Opción padre:</label>
+                    <b:selectOneMenu id="sltOpPadre" 
+                                     value="#{opcionesMenuControlador.opcion.secOpmOpcionesMenu.opmId}"
+                                     colMd="12">
+                        <f:selectItem itemValue="" itemLabel="Seleccione Opción Padre" noSelectionOption="true"/>
+                        <f:selectItems value="#{opcionesMenuControlador.listarOpcionesPorModulo()}" 
+                                       var="opcion" 
+                                       itemValue="#{opcion.opmId}" 
+                                       itemLabel="#{opcion.opmEtiqueta}"/>
+                    </b:selectOneMenu>
+                </div>
+                <b:fetchBeanInfos />
+                <b:messages></b:messages>
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.add').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{opcionesMenuControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="addForm frm"
+                                      action="#{opcionesMenuControlador.guardar()}"
+                                      value="Guardar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.add').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>        
+
+        <h:form id="frm"
+                prependId="false"
+                styleClass="form-horizontal">   
+
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info"/>
+
+            <!-- FILTRO DE DATOS -->
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Búsqueda de Opciones de Menu
+                </div>
+
+                <div class="panel-body">   
+
+                    <b:row>
+                        <b:column class="col-md-2">
+                            <h:outputText class="font-weight-bold" value="Seleccione sistema: "/>
+                        </b:column>
+                        <b:column class="col-md-4">
+                            <b:selectOneMenu id="sltSistema" 
+                                             value="#{opcionesMenuControlador.sistema.sisId}" 
+                                             required="false"
+                                             colMd="12">
+                                <f:selectItem itemValue="0" itemLabel="Seleccione Sistema"/>
+                                <f:selectItems value="#{opcionesMenuControlador.listarSistemas()}" 
+                                               var="sistema" 
+                                               itemValue="#{sistema.sisId}" 
+                                               itemLabel="#{sistema.sisNombre}"/>
+                                <f:ajax render="frm:sltModulo" listener="#{opcionesMenuControlador.listarModulosBySistema()}"/>
+                            </b:selectOneMenu>
+                        </b:column>
+                        <b:column class="col-md-2">
+                            <h:outputText class="font-weight-bold" value="Seleccione módulo: "/>
+                        </b:column>
+                        <b:column class="col-md-4">
+                            <b:selectOneMenu id="sltModulo" 
+                                             value="#{opcionesMenuControlador.modulo.mdsId}" 
+                                             required="false"
+                                             colMd="12">
+                                <f:selectItem itemValue="0" itemLabel="Seleccione módulo"/>
+                                <f:selectItems value="#{opcionesMenuControlador.listarModulosBySistema()}" 
+                                               var="modulo" 
+                                               itemValue="#{modulo.mdsId}" 
+                                               itemLabel="#{modulo.mdsNombre}"/>
+                                <f:ajax render="frm" listener="#{opcionesMenuControlador.listarOpciones()}"/>
+                            </b:selectOneMenu>
+                        </b:column>
+
+                    </b:row>               
+                </div>
+            </div>
+            <!-- FIN DE FILTRADO DE DATOS -->
+
+
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Opciones Registradas
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Agregar"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm" action="#{opcionesMenuControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+                            </b:form>     
+                        </div>
+                    </div>
+                    <hr/>
+
+                    <b:dataTable value="#{opcionesMenuControlador.listarOpciones()}"
+                                 var="opcion" styleClass="table" id="tblOpciones"
+                                 page-length="10" widgetVar="P"
+                                 responsive="true"
+                                 style="width:100%"
+                                 page-length-menu="10,20,50">
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Etiqueta"/>
+                            </f:facet>
+                            <h:outputText value="#{opcion.opmEtiqueta}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn width="5%">
+                            <f:facet name="header">
+                                <h:outputText value="Comando"/>
+                            </f:facet>
+                            <h:outputText value="#{opcion.opmComando}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn width="5%">
+                            <f:facet name="header">
+                                <h:outputText value="Orden"/>
+                            </f:facet>
+                            <h:outputText value="#{opcion.opmOrden}"/>
+                        </b:dataTableColumn> 
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Estado"/>
+                            </f:facet>
+                            <h:outputText value="#{opcion.opmEstado}"/>
+                        </b:dataTableColumn> 
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Módulo"/>
+                            </f:facet>
+                            <h:outputText value="#{opcion.secMdsModulosSistemas.mdsNombre}"/>
+                        </b:dataTableColumn> 
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+
+                            <b:commandButton oncomplete="$('.roles').modal();"  
+                                             process="@this"  
+                                             update=":frmRoles" 
+                                             iconAwesome="fas fa-users-cog" 
+                                             look="secondary" 
+                                             title="Roles que tienen acceso ala opción"     
+                                             id="cmdOpenModalRoles"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{opcion}" target="#{opcionesMenuControlador.opcion}"/> 
+                            </b:commandButton>&nbsp;
+
+                            <b:commandButton oncomplete="$('.edit').modal();"  
+                                             process="@this"  
+                                             update=":frmUpd" 
+                                             iconAwesome="fa fa-edit" 
+                                             look="primary" 
+                                             title="Editar"     
+                                             id="cmdMostrar"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{opcion}" target="#{opcionesMenuControlador.opcion}"/>
+                            </b:commandButton>&nbsp;
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             action="#{opcionesMenuControlador.borrar()}"
+                                             process="@this"
+                                             styleClass="btn btn-danger btn-xs btn-del"
+                                             update="@form">
+                                <f:setPropertyActionListener value="#{opcion}" target="#{opcionesMenuControlador.opcion}"/>     
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar esta opción?" icon="ui-icon-alert" />
+                            </p:commandButton>
+                        </b:dataTableColumn> 
+
+                    </b:dataTable>
+
+                </div>
+            </div>
+
+        </h:form>
+
+        <!-- MODAL PARA ACTUALIZAR LOS DATOS DE UNA OPCION -->
+        <b:modal title="Actualizar Opción" styleClass="formModal edit"
+                 closable="false"
+                 id="dlgUpd"
+                 closeOnEscape="true"
+                 backdrop="false"
+                 size="modal-lg">
+            <b:form id="frmUpd" class="mx-5">
+
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Etiqueta:</label>
+                    <b:inputText 
+                        id="txtEtiquetaUpd" 
+                        placeholder="Etiqueta de la opción" 
+                        value="#{opcionesMenuControlador.opcion.opmEtiqueta}" 
+                        requiredMessage="Etiqueta es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Comando:</label>
+                    <b:inputText 
+                        id="txtComandoUpd" 
+                        placeholder="Comando de la opción" 
+                        value="#{opcionesMenuControlador.opcion.opmComando}" 
+                        requiredMessage="Comando es requerido" 
+                        required="true" colMd="12" />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Orden:</label>
+                    <b:inputText id="txtOrdenUpd" 
+                                 placeholder="Orden del opción" 
+                                 value="#{opcionesMenuControlador.opcion.opmOrden}"    
+                                 mask="numeric"
+                                 class="text-left"
+                                 requiredMessage="Orden es requerido" 
+                                 required="true" 
+                                 colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Estado:</label>
+                    <b:selectOneMenu 
+                        id="sltEstadoUpd" 
+                        value="#{opcionesMenuControlador.opcion.opmEstado}" 
+                        requiredMessage="Estado es requerido" 
+                        colMd="12" 
+                        required="true" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Estado" noSelectionOption="true"/>
+                        <f:selectItem itemValue="ACT" itemLabel="Activo"/>
+                        <f:selectItem itemValue="INA" itemLabel="Inactivo"/>
+                    </b:selectOneMenu>
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Módulo:</label>
+                    <b:selectOneMenu id="sltModuloUpd" 
+                                     value="#{opcionesMenuControlador.opcion.secMdsModulosSistemas.mdsId}" 
+                                     required="true"
+                                     colMd="12"
+                                     requiredMessage="Módulo es requerido" >
+                        <f:selectItem itemValue="" itemLabel="Seleccione Módulo" noSelectionOption="true"/>
+                        <f:selectItems value="#{opcionesMenuControlador.listarModulosBySistema()}" 
+                                       var="modu" 
+                                       itemValue="#{modu.mdsId}" 
+                                       itemLabel="#{modu.mdsNombre.concat('/').concat(modu.secSisSistemas.sisNombre)}"></f:selectItems>
+                        <f:ajax render="frmUpd:sltOpPadreUpd"/>
+                    </b:selectOneMenu>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Opción padre:</label>
+                    <b:selectOneMenu id="sltOpPadreUpd"  
+                                     value="#{opcionesMenuControlador.opcion.secOpmOpcionesMenu}"
+
+                                     colMd="12">
+                        <f:selectItem itemValue="#{null}" itemLabel="Seleccione Opción Padre"/>
+                        <f:selectItems value="#{opcionesMenuControlador.listarOpcionesPorModulo()}" 
+                                       var="opcion" 
+                                       itemValue="#{opcion}" 
+                                       itemLabel="#{opcion.opmEtiqueta}"/>
+                    </b:selectOneMenu>
+                </div>
+                <b:fetchBeanInfos />
+                <b:messages></b:messages>
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.edit').modal('hide')" 
+                                       update="frmUpd" 
+                                       action="#{opcionesMenuControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton  update="frmUpd frm"
+                                      action="#{opcionesMenuControlador.actualizar()}"
+                                      value="Actualizar" 
+                                      styleClass="btn btn-primary btn-sm"
+                                      iconAwesome="far fa-save"
+                                      oncomplete="if(!validationFailed) { $('.edit').modal('hide') } ">
+                    </b:commandButton>
+
+                </div>
+            </b:form>
+        </b:modal> 
+
+        <!-- FIN DE MODAL PARA ACTUALIZAR LOS DATOS DE UNA OPCION -->    
+
+        <!-- FIN DE MODAL PARA EDITAR LOS ROLES -->    
+        <b:modal title="Accesos de la Opción" styleClass="roles"
+                 closable="false"
+                 id="rolesModal"
+                 closeOnEscape="false"
+                 backdrop="false"
+                 size="modal-lg">
+            <b:form id="frmRoles" class="mx-3">
+
+                <div class="form-group row">
+                    <label class="font-weight-bold col-md-2 col-lg-2">Sin acceso:</label>
+                    <b:selectOneMenu id="sltRol" 
+                                     value="#{opcionesMenuControlador.rol.rolId}" 
+                                     required="false"
+                                     colMd="8">
+                        <f:selectItems value="#{opcionesMenuControlador.rolesWthoutOption()}" 
+                                       var="rol" 
+                                       itemValue="#{rol.rolId}" 
+                                       itemLabel="#{rol.rolNombre}"
+                                      />
+                    </b:selectOneMenu>
+                    <b:commandButton    class="btn btn-secondary btn-sm"
+                                        value="Añadir"
+                                        update="frmRoles" 
+                                        colMd="2"
+                                        colLg="2"
+                                        id="addRolBtn"
+                                        action="#{opcionesMenuControlador.addNewRol()}" 
+                                        look="secondary"
+                                        iconAwesome="fas fa-plus">
+                    </b:commandButton>
+                </div><hr/>
+
+                <b:row>
+                    <b:column class="col-md-12 mt-2">
+                        <h3 class="header-title mb-1"> Listado de Roles que tienen acceso</h3>
+                        <b:dataTable paginated="false"
+                                     searching="false" 
+                                     value="#{opcionesMenuControlador.opcion.secOprOpcionesRoleses}" 
+                                     var="rol"
+                                     auto-update="true">
+                            <b:dataTableColumn style="display: none;" value="#{rol.secRolRoles.rolId}"  label="Id" />
+                            <b:dataTableColumn value="#{rol.secRolRoles.rolNombre}" label="Nombre" />
+
+                            <b:dataTableColumn class="text-center" width="10">
+                                <f:facet name="header">
+                                    <h:outputText value="Acciones"/>
+                                </f:facet>
+                                <p:commandButton id="cmdDeletRolesRoles"
+                                                 icon="fas fa-user-times"
+                                                 title="Remover acceso a rol"
+                                                 action="#{opcionesMenuControlador.removeRolFromOption()}"
+                                                 process="@this"
+                                                 styleClass="btn btn-danger btn-block"
+                                                 update=":frmRoles">
+                                    <f:setPropertyActionListener value="#{rol}" target="#{opcionesMenuControlador.opcionRol}"/>     
+                                    <p:confirm  header="Confirmación" message="¿En verdad desea remover el acceso a este rol?" icon="ui-icon-alert" />
+                                </p:commandButton>
+                            </b:dataTableColumn>
+                        </b:dataTable>
+                    </b:column>
+                </b:row>
+
+                <div class = "modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"><i class="fas fa-sign-out-alt"></i>&nbsp;Cerrar</button>
+                </div>
+
+            </b:form>
+        </b:modal> 
+
+        <!-- FIN DE MODAL PARA EDITAR LOS ROLES -->    
+    </ui:define>
+
+</ui:composition>

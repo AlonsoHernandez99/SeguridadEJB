@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"  
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui">
+
+    <h:head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>::Seguridad::</title>
+
+        <!-- Bootstrap --> 
+        <link href="../resources/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>   
+
+        <!-- MetisMenu CSS -->
+        <link href="../resources/metisMenu/metisMenu.min.css" rel="stylesheet"/>
+
+        <!-- Custom Fonts  -->    
+        <link href="../resources/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>          
+
+        <!-- Custom CSS -->
+        <link href="../resources/css/style.css" rel="stylesheet"/>     
+
+        <!-- JQuery   
+        <script src="../resources/jquery/jquery-1.11.3.min.js"></script>-->
+
+        <!-- Bootstrap Core JavaScript --> 
+        <script src="../resources/bootstrap/js/bootstrap.min.js"></script> 
+
+        <!-- Metis Menu Plugin JavaScript -->
+        <script src="../resources/metisMenu/metisMenu.min.js"></script>
+
+        <!-- Custom Theme JavaScript -->
+        <script src="../resources/js/admin.js"></script>     
+
+    </h:head>
+
+    <h:body>
+
+        <p:ajaxExceptionHandler type="javax.faces.application.ViewExpiredException" 
+                                onexception="window.location = '../sesionTerminada.xhtml';"/>                
+
+        <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()" />
+
+        <p:dialog widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false" responsive="true">
+            <p:graphicImage library="images" name="squares.gif" />
+        </p:dialog>           
+
+        <h:form>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" closeOnEscape="true">
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />         
+            </p:confirmDialog>
+        </h:form>
+
+        <div id="wrapper">
+
+            <!-- Navigation -->
+            <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="../mantenimiento/bienvenida.xhtml">Seguridad</a>
+                </div>
+                <!-- /.navbar-header -->
+
+                <ul id="customerMenu" class="nav navbar-top-links navbar-right">
+                    <!-- /.dropdown -->
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user">
+                            <li><a href="#"><i class="fa fa-user fa-fw"></i> #{loginControlador.usuario.usrNombre}</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <h:form>
+                                    <h:commandLink value="" action="#{loginControlador.cerrarSesion()}">
+                                        <i class="fa fa-sign-out fa-fw"></i> Salir
+                                    </h:commandLink>
+                                </h:form>
+                            </li>
+                        </ul>
+                        <!-- /.dropdown-user -->
+                    </li>
+                    <!-- /.dropdown -->
+                </ul>
+                <!-- /.navbar-top-links -->                
+
+                <div class="navbar-default sidebar" role="navigation">
+                    <div class="sidebar-nav navbar-collapse">
+                        <ul class="nav" id="side-menu">
+                            <li class="sidebar-search">
+                                <!-- /input-group -->
+                            </li>
+                            <li>
+                                <a href="../mantenimiento/sistema.xhtml"><i class="fa fa-desktop fa-fw"></i> Sistemas</a>
+                            </li>
+                            <li>
+                                <a href="../mantenimiento/modulo.xhtml"><i class="fa fa-cubes fa-fw"></i> Modulos</a>
+                            </li> 
+                            <li>
+                                <a href="../mantenimiento/opcion.xhtml"><i class="fa fa-bars fa-fw"></i> Opciones de Menu</a>
+                            </li>
+                            <li>
+                                <a href="../mantenimiento/roles.xhtml"><i class="fa fa-users fa-fw"></i> Roles</a>
+                            </li>
+                            <li>
+                                <a href="../mantenimiento/usuario.xhtml"><i class="fa fa-male fa-fw"></i> Usuarios</a>
+                            </li>   
+                            <li>
+                                <a href="../mantenimiento/parametro.xhtml"><i class="fa fa-cogs fa-fw"></i> Párametros</a>
+                            </li>                                                          
+                            <li >
+                                <h:form>
+                                    <h:commandLink value="" action="#{loginControlador.cerrarSesion()}" style="padding: 10px 15px; text-decoration: none;">
+                                        <i class="fa fa-sign-out fa-fw"></i> Salir
+                                    </h:commandLink>
+                                </h:form>
+                            </li>   
+                        </ul>
+                    </div>
+                    <!-- /.sidebar-collapse -->
+                </div>
+                <!-- /.navbar-static-side -->
+            </nav>
+
+            <div id="page-wrapper">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header"><ui:insert name="header">Titulo de la Página</ui:insert></h1>
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+
+                <div class="row">
+                    <ui:insert name="content">Content</ui:insert>
+                </div>
+                <!-- /.row -->
+
+            </div>
+            <!-- /#page-wrapper -->
+        </div>
+        <!-- /#wrapper -->
+
+    </h:body>
+
+</html>

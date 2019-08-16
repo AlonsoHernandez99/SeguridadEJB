@@ -1,0 +1,170 @@
+package com.seguridad.controlador;
+
+import com.seguridad.dao.SecMdsModulosSistemasDAO;
+import com.seguridad.dao.SecOpmOpcionesMenuDAO;
+import com.seguridad.modelo.SecMdsModulosSistemas;
+import com.seguridad.modelo.SecOpmOpcionesMenu;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.view.ViewScoped;
+import javax.inject.Named;
+import org.primefaces.model.DefaultTreeNode;
+import org.primefaces.model.TreeNode;
+
+@Named
+@ViewScoped
+public class OpcionesMenuControlador implements Serializable {
+
+    private SecOpmOpcionesMenu opcion;
+    private TreeNode root;
+    @EJB(beanName = "SecMdsModulosSistemasDAO")
+    private SecMdsModulosSistemasDAO mdsDAO;
+    @EJB(beanName = "SecOpmOpcionesMenuDAO")
+    private SecOpmOpcionesMenuDAO opmDAO;
+
+    public OpcionesMenuControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        opcion = new SecOpmOpcionesMenu();
+        opcion.setSecOpmOpcionesMenu(new SecOpmOpcionesMenu());
+        listarTreeOpciones();
+    }
+
+    public List<SecMdsModulosSistemas> listarModulos() {
+        return mdsDAO.findAll();
+    }
+
+    public List<SecOpmOpcionesMenu> listarOpciones() {
+        return opmDAO.findOpcionesPadre();
+    }
+
+    public void listarTreeOpciones() {
+        List<SecOpmOpcionesMenu> menus = opmDAO.findOpcionesPadre();
+        root = new DefaultTreeNode(new SecOpmOpcionesMenu(), null);
+
+        treeMenu(root, menus);
+    }
+
+    private void treeMenu(TreeNode root, Collection<SecOpmOpcionesMenu> menus) {
+        TreeNode node;
+
+        for (SecOpmOpcionesMenu menu : menus) {
+            node = new DefaultTreeNode(menu, root);
+
+            try {
+                //if (!menu.getSecOpmOpcionesMenus().isEmpty()) {
+                    treeMenu(node, menu.getSecOpmOpcionesMenus());
+                //}
+            } catch (Exception exc) {
+                exc.printStackTrace();
+            }
+
+        }
+
+    }
+
+    public List<SecOpmOpcionesMenu> listarOpcionesPorModulo() {
+        return opmDAO.findByModulo(opcion.getSecMdsModulosSistemas().getMdsId(), opcion.getOpmId());
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            if (opcion.getSecOpmOpcionesMenu().getOpmId() == null) {
+                opcion.setSecOpmOpcionesMenu(null);
+            }
+            opmDAO.save(opcion);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción almacenada.");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar la Opción.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarTreeOpciones();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        SecOpmOpcionesMenu opmAux;
+        try {
+            /*if (opcion.getSecOpmOpcionesMenu().getOpmId() == 0) {
+                opcion.setSecOpmOpcionesMenu(null);
+            }*/
+            opmAux = opmDAO.findById(opcion.getOpmId());
+            opmAux.setOpmEtiqueta(opcion.getOpmEtiqueta());
+            opmAux.setOpmComando(opcion.getOpmComando());
+            opmAux.setOpmOrden(opcion.getOpmOrden());
+            opmAux.setOpmEstado(opcion.getOpmEstado());
+            opmAux.setSecMdsModulosSistemas(opcion.getSecMdsModulosSistemas());
+            opmAux.setSecOpmOpcionesMenu(opcion.getSecOpmOpcionesMenu());
+
+            actualizarCascada(opmAux);
+
+            opmDAO.merge(opmAux);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción actualizada.");
+        } catch (RuntimeException hexec) {
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo actualizar", hexec);
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar la Opción.");
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarTreeOpciones();
+    }
+
+    public void actualizarCascada(SecOpmOpcionesMenu opm) {
+        if (!opm.getSecOpmOpcionesMenus().isEmpty()) {
+            for (SecOpmOpcionesMenu opc : (Set<SecOpmOpcionesMenu>) opm.getSecOpmOpcionesMenus()) {
+                opc.setOpmEstado(opm.getOpmEstado());
+                opc.setSecMdsModulosSistemas(opm.getSecMdsModulosSistemas());
+                actualizarCascada(opc);
+            }
+        }
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            opmDAO.remove(opcion);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Opción borrada.");
+        } catch (RuntimeException hexec) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar la Opción.");
+            Logger.getLogger(OpcionesMenuControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar", hexec);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        reset();
+        listarTreeOpciones();
+    }
+
+    public void reset() {
+        this.opcion = new SecOpmOpcionesMenu();
+        this.opcion.setSecOpmOpcionesMenu(new SecOpmOpcionesMenu());
+    }
+
+    public SecOpmOpcionesMenu getOpcion() {
+        return opcion;
+    }
+
+    public void setOpcion(SecOpmOpcionesMenu opcion) {
+        this.opcion = opcion;
+    }
+
+    public TreeNode getRoot() {
+        return root;
+    }
+
+    public void setRoot(TreeNode root) {
+        this.root = root;
+    }
+
+}

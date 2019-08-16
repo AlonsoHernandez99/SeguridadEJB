@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Sistemas
+    </ui:define>
+
+    <ui:define name="content">
+
+        <f:metadata>                    
+            <f:event listener="#{loginControlador.verifyUseLogin()}" type="preRenderView"/>   
+        </f:metadata>             
+
+        <b:modal title="Agregar Sistema" styleClass="formModal add"
+                 closable="false"
+                 closeOnEscape="true">
+            <b:form id="addForm">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText id="sistemaCod" placeholder="Ingrese Código de Sistema" value="#{sistemaControlador.sistema.sisCodigo}" requiredMessage="Código de sistema requerido" required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText id="sistemaName" placeholder="Ingrese Nombre de Sistema" value="#{sistemaControlador.sistema.sisNombre}" requiredMessage="Nombre de sistema requerido" required="true" colMd="12"/>
+                </div>
+
+
+                <b:messages class="font-weight-bold" ></b:messages>
+
+                <b:fetchBeanInfos />
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.add').modal('hide')" 
+                                       update="addForm" 
+                                       action="#{sistemaControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="addForm sistemForm"
+                                     action="#{sistemaControlador.guardar()}"
+                                     value="Guardar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('.add').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+        <h:form id="sistemForm"
+                prependId="false"  
+                styleClass="form-horizontal">
+
+
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info"/>
+
+            <div class="panel panel-dark">
+                <div class="panel-heading font-weight-bold">
+                    Sistemas Registrados
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Agregar"
+                                                 oncomplete="$('.add').modal();"  
+                                                 update="addForm" action="#{sistemaControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+
+                            </b:form>     
+                        </div>
+                    </div>
+                    <hr/>
+
+                    <b:dataTable value="#{sistemaControlador.listarSistemas()}"
+                                 var="col" styleClass="table" id="tablaRol"
+                                 page-length="10"
+                                 responsive="true"
+                                 style="width:100%"
+                                 scroll-x="false"
+                                 page-length-menu="10,20,50">
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Id"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisId}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Código"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisCodigo}"/>
+                        </b:dataTableColumn>                        
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Nombre"/>
+                            </f:facet>
+                            <h:outputText value="#{col.sisNombre}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+
+                            <b:commandButton oncomplete="$('.edit').modal();"  
+                                             process="@this"  
+                                             update=":sistemFormMod" 
+                                             iconAwesome="fa fa-edit" 
+                                             look="secondary" 
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{sistemaControlador.sistema}" />
+                            </b:commandButton>&nbsp;
+
+                            <p:commandButton id="cmdBorrar" 
+                                             icon="fa fa-trash"
+                                             title="Borrar"
+                                             styleClass="btn btn-danger btn-sm btn-del"
+                                             action="#{sistemaControlador.borrar()}" process="@this"
+                                             update="sistemForm">
+                                <f:setPropertyActionListener value="#{col}"
+                                                             target="#{sistemaControlador.sistema}"/>
+                                <p:confirm  header="Confirmación" message="¿En verdad desea eliminar este sistema?" icon="ui-icon-alert" />
+
+                            </p:commandButton>
+
+                        </b:dataTableColumn>
+                    </b:dataTable>
+                </div>
+            </div>
+        </h:form>
+
+        <b:modal title="Actualizar Datos" styleClass="formModal edit"
+                 closable="false"
+                 closeOnEscape="true">
+            <b:form id="sistemFormMod">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText id="sistemaCodEdit" placeholder="Ingrese Código de Sistema" value="#{sistemaControlador.sistema.sisCodigo}" requiredMessage="Código de sistema requerido" required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Nombre:</label>
+                    <b:inputText id="sistemaNameEdit" placeholder="Ingrese Nombre de Sistema" value="#{sistemaControlador.sistema.sisNombre}" requiredMessage="Nombre de sistema requerido" required="true" colMd="12"/>
+                </div>
+                <b:messages class="font-weight-bold"></b:messages>
+                <b:fetchBeanInfos />
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('.edit').modal('hide')" 
+                                       update="addForm"
+                                       action="#{sistemaControlador.reset()}" 
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="sistemFormMod sistemForm"
+                                     action="#{sistemaControlador.actualizar()}"
+                                     value="Actualizar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('.edit').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+    </ui:define>
+
+</ui:composition>

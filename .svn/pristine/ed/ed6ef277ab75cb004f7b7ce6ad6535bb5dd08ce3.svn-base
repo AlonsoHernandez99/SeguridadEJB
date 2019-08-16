@@ -1,0 +1,88 @@
+package com.seguridad.controlador;
+
+import com.seguridad.dto.Sistema;
+import com.seguridad.servicio.SistemaServicio;
+import java.io.Serializable;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.inject.Named;
+import javax.faces.view.ViewScoped;
+import javax.inject.Inject;
+
+@Named
+@ViewScoped
+public class SistemaControlador implements Serializable {
+
+    private Sistema sistema;
+
+    @Inject
+    SistemaServicio sisServ;
+
+    public SistemaControlador() {
+    }
+
+    @PostConstruct
+    public void init() {
+        this.sistema = new Sistema();
+    }
+
+    public List<Sistema> listarSistemas() {
+        List<Sistema> listaSistemas = sisServ.findAll();
+        return listaSistemas;
+    }
+
+    public void guardar() {
+        FacesMessage msj;
+        try {
+            sisServ.save(sistema);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Sistema almacenado.");
+        } catch (RuntimeException e) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo almacenar el sistema.");
+            Logger.getLogger(SistemaControlador.class.getName()).log(Level.SEVERE, "No se pudo guardar el registro", e);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.sistema = new Sistema();
+    }
+
+    public void borrar() {
+        FacesMessage msj;
+        try {
+            sisServ.remove(sistema);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Sistema borrado.");
+        } catch (RuntimeException e) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo borrar el sistema.");
+            Logger.getLogger(SistemaControlador.class.getName()).log(Level.SEVERE, "No se pudo borrar el registro", e);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.sistema = new Sistema();
+    }
+
+    public void actualizar() {
+        FacesMessage msj;
+        try {
+            sisServ.merge(sistema);
+            msj = new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Sistema actualizado.");
+        } catch (RuntimeException e) {
+            msj = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo actualizar el sistema.");
+            Logger.getLogger(SistemaControlador.class.getName()).log(Level.SEVERE, "No se pudo merge el registro", e);
+        }
+        FacesContext.getCurrentInstance().addMessage(null, msj);
+        this.sistema = new Sistema();
+    }
+
+    public void reset() {
+        this.sistema = new Sistema();
+    }
+
+    public Sistema getSistema() {
+        return sistema;
+    }
+
+    public void setSistema(Sistema sistema) {
+        this.sistema = sistema;
+    }
+}

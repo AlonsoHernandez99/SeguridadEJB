@@ -1,0 +1,245 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"                
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui">
+
+    <ui:define name="header">
+        Mantenimiento de Parámetros
+    </ui:define>
+
+    <ui:define name="content">
+
+        <b:modal title="Agregar Nuevo Párametro" id="agregarModal" styleClass="formModal add"
+                 closable="false"
+                 closeOnEscape="true"
+                 backdrop="false"
+                 size="modal-md">
+            <b:form id="addForm" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText 
+                        id="txtCodigo" 
+                        placeholder="Código del parametro" 
+                        value="#{parametroControlador.parametro.parCodigo}"
+                        requiredMessage="Codigo es requerido" 
+                        required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Valor:</label>
+                    <b:inputText 
+                        id="txtValor" 
+                        placeholder="Valor del parametro" 
+                        value="#{parametroControlador.parametro.parValor}"
+                        requiredMessage="Valor es requerido" 
+                        required="true" colMd="12"  />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Descripción:</label>
+                    <b:inputTextarea 
+                        id="txtDesc"
+                        rows="5"
+                        style="resize: none;"
+                        class="form-control"
+                        placeholder="Descripción del parametro" 
+                        colMd="12"
+                        value="#{parametroControlador.parametro.parDescripcion}"/>
+                </div>
+
+                <div class="form-group">
+                    <b:messages style="margin-top: 8pc !important;" class="font-weight-bold"></b:messages>
+                </div>
+                <b:fetchBeanInfos/>
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('#agregarModal').modal('hide')" 
+                                       update="parFrm" 
+                                       action="#{parametroControlador.reset()}"  
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="addForm parFrm"
+                                     action="#{parametroControlador.guardar()}"
+                                     value="Guardar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('#agregarModal').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+        <h:form 
+            id="parFrm"
+            prependId="false"
+            styleClass="form-horizontal">
+
+            <b:growl id="growl"
+                     globalOnly="true"
+                     showDetail="true"
+                     placementFrom="bottom"
+                     style="font-weight: bold;"
+                     animation-exit="animated flipOutX"
+                     allowDismiss="true"
+                     severity="info error"/>
+
+
+
+            <div class="panel panel-dark">
+                <div class="panel-heading">
+                    Parámetros Registrados
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col-md-2">
+                            <b:form>
+                                <b:commandButton value="Agregar"
+                                                 oncomplete="$('#agregarModal').modal();"  
+                                                 update="addForm" action="#{parametroControlador.reset()}"
+                                                 iconAwesome="fa fa-plus-square" 
+                                                 look="dark" 
+                                                 size="block" />
+                            </b:form>     
+                        </div>
+                    </div>
+                    <hr/>
+
+                    <b:dataTable value="#{parametroControlador.listarParametros()}"
+                                 var="parametro" styleClass="table" id="tblParametros"
+                                 page-length="10" widgetVar="P"
+                                 responsive="true"
+                                 style="width: 100%"
+                                 page-length-menu="10,20,50">
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Código"/>
+                            </f:facet>
+                            <h:outputText value="#{parametro.parCodigo}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Descripción"/>
+                            </f:facet>
+                            <h:outputText value="#{parametro.parDescripcion}"/>
+                        </b:dataTableColumn>
+                        <b:dataTableColumn>
+                            <f:facet name="header">
+                                <h:outputText value="Valor"/>
+                            </f:facet>
+                            <h:outputText value="#{parametro.parValor}"/>
+                        </b:dataTableColumn>
+
+                        <b:dataTableColumn class="text-center">
+                            <f:facet name="header">
+                                <h:outputText value="Opciones"/>
+                            </f:facet>
+
+                            <b:commandButton oncomplete="$('#updModal').modal();"  
+                                             process="@this"  
+                                             update=":updForm" 
+                                             iconAwesome="fa fa-edit" 
+                                             look="primary" 
+                                             title="Editar"     
+                                             id="cmdEditar"
+                                             size="xs">
+                                <f:setPropertyActionListener value="#{parametro}" target="#{parametroControlador.parametro}"/>
+                            </b:commandButton>&nbsp;
+
+
+                            <p:commandButton id="cmdBorrar"
+                                             icon="fa fa-trash"
+                                             styleClass="btn btn-danger btn-del"
+                                             title="Borrar"
+                                             process="@this"
+                                             update="@form"
+                                             action="#{parametroControlador.borrar()}">
+                                <f:setPropertyActionListener value="#{parametro}" target="#{parametroControlador.parametro}"/>        
+                                <p:confirm header="Confirmación" message="¿En verdad desea eliminar este parámetro?" icon="ui-icon-alert" />
+                            </p:commandButton>
+                        </b:dataTableColumn>
+
+                    </b:dataTable>
+
+                </div>                
+            </div>          
+
+        </h:form>
+
+        <b:modal title="Editar Párametro" id="updModal" styleClass="formModal add"
+                 closable="false"
+                 closeOnEscape="true"
+                 backdrop="false"
+                 size="modal-md">
+            <b:form id="updForm" class="mx-2">
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Código:</label>
+                    <b:inputText 
+                        id="txtCodigo" 
+                        readonly="true"
+                        placeholder="Código del parametro" 
+                        value="#{parametroControlador.parametro.parCodigo}"
+                        requiredMessage="Codigo es requerido" 
+                        required="true" colMd="12"/>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Valor:</label>
+                    <b:inputText 
+                        id="txtValor" 
+                        placeholder="Valor del parametro" 
+                        value="#{parametroControlador.parametro.parValor}"
+                        requiredMessage="Valor es requerido" 
+                        required="true" colMd="12"  />
+                </div>
+                <div class="form-group">
+                    <label class="col-form-label font-weight-bold">Descripción:</label>
+                    <b:inputTextarea 
+                        id="txtDesc"
+                        rows="5"
+                        style="resize: none;"
+                        class="form-control"
+                        placeholder="Descripción del parametro" 
+                        colMd="12"
+                        value="#{parametroControlador.parametro.parDescripcion}"/>
+                </div>
+
+                <div class="form-group">
+                    <b:messages style="margin-top: 8pc !important;" class="font-weight-bold"></b:messages>
+                </div>
+                <b:fetchBeanInfos/>
+
+                <div class="modal-footer">
+                    <b:commandButton   value="Cerrar"
+                                       oncomplete="$('#updModal').modal('hide')" 
+                                       update="parFrm" 
+                                       action="#{parametroControlador.reset()}"  
+                                       styleClass="btn btn-danger btn-sm"
+                                       iconAwesome="fas fa-sign-out-alt"
+                                       />
+
+                    <b:commandButton update="updForm parFrm"
+                                     action="#{parametroControlador.actualizar()}"
+                                     value="Actualizar" 
+                                     styleClass="btn btn-primary btn-sm"
+                                     iconAwesome="far fa-save"
+                                     oncomplete="if(!validationFailed) { $('#updModal').modal('hide') } ">
+                    </b:commandButton>
+                </div>
+            </b:form>
+        </b:modal>
+
+    </ui:define>
+
+</ui:composition>
